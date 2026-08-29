@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "scenarioId": "ZZE-FLOOD-2023-0423",
+  "simulationWindow": { "start": "09:00", "end": "09:47", "durationMinutes": 47 },
+  "passengers": {
+    "total": 37000,
+    "aggregation": { "globalViewPassengersPerDot": 50, "floorViewPassengersPerDot": 20, "regionViewPassengersPerDot": 10 },
+    "initialDistribution": {
+      "waiting_hall_3f": 28000,
+      "perimeter_3f": 5000,
+      "gate_zones_3f": 2500,
+      "ticket_service_3f": 1000,
+      "platform_other": 500,
+      "west_plaza_1f": 0
+    }
+  },
+  "trains": {
+    "delayedCount": 68,
+    "stoppedCount": 6,
+    "stoppedTrainNumbers": ["G7991", "G804", "G91", "G77", "G891", "G1516"],
+    "arrivingWithinOneHour": ["G572", "G2626", "G2807", "G364", "G3215", "G3127", "G814", "G1278/5"]
+  },
+  "calibrationAnchors": [
+    { "time": "09:05", "metric": "total_waiting_passengers", "value": 37000, "source": "演练脚本" },
+    { "time": "09:35", "metric": "waiting_hall_passengers", "value": 18000, "source": "演练脚本回流段转场词" },
+    { "time": "09:46", "metric": "waiting_hall_passengers", "value": 20000, "source": "演练脚本现场汇报（约数）" }
+  ]
+}

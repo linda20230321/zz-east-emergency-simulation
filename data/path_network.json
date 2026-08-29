@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "paths": [
+    { "id": "PATH_1", "name": "疏散主流", "from": "waiting_hall_3f", "to": "west_plaza_1f", "active": ["09:21", "09:35"] },
+    { "id": "PATH_2", "name": "超时旅客引导", "from": "gate_zones_3f", "to": "west_plaza_1f", "active": ["09:23", "09:35"] },
+    { "id": "PATH_3", "name": "回流主干道", "from": "west_plaza_1f", "to": "waiting_hall_3f", "active": ["09:35", "09:47"] },
+    { "id": "PATH_4", "name": "绿色通道回流", "from": "exit_hall_1f", "to": "waiting_hall_3f", "active": ["09:35", "09:47"] },
+    { "id": "PATH_5", "name": "退票流线", "from": "waiting_hall_3f", "to": "ticket_service_3f", "active": ["09:26", "09:47"] },
+    { "id": "PATH_6", "name": "高普联动", "from": "gate_zones_3f", "to": "southwest_dropoff", "active": ["09:29", "09:47"] },
+    { "id": "PATH_7", "name": "站台乘降", "from": "gate_zones_3f", "to": "platform_2f", "active": ["09:00", "09:47"] },
+    { "id": "PATH_8", "name": "出站流线", "from": "platform_2f", "to": "exit_hall_1f", "active": ["09:00", "09:47"] }
+  ]
+}

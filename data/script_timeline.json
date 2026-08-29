@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "scenarioId": "ZZE-FLOOD-2023-0423",
+  "events": [
+    { "id": "E0900", "minute": 0, "time": "09:00", "name": "演练背景", "location": "生产指挥中心" },
+    { "id": "E0902", "minute": 2, "time": "09:02", "name": "启动一级响应", "location": "生产指挥中心" },
+    { "id": "E0905", "minute": 5, "time": "09:05", "name": "岗位到位与限流", "location": "全站" },
+    { "id": "E0912", "minute": 12, "time": "09:12", "name": "客运车间响应", "location": "生产指挥中心" },
+    { "id": "E0913", "minute": 13, "time": "09:13", "name": "综控计划处置", "location": "综控计划室" },
+    { "id": "E0917", "minute": 17, "time": "09:17", "name": "晚点广播", "location": "32B检票口" },
+    { "id": "E0919", "minute": 19, "time": "09:19", "name": "停运信息发布", "location": "服务台/南北进站口" },
+    { "id": "E0921", "minute": 21, "time": "09:21", "name": "大规模疏散启动", "location": "3F候车厅→1F西广场" },
+    { "id": "E0923", "minute": 23, "time": "09:23", "name": "候车分区组织", "location": "B8-B9后方" },
+    { "id": "E0926", "minute": 26, "time": "09:26", "name": "增开退改签窗口", "location": "第八售票处" },
+    { "id": "E0929", "minute": 29, "time": "09:29", "name": "高普联动", "location": "B4-B5/西南落客平台" },
+    { "id": "E0932", "minute": 32, "time": "09:32", "name": "西南口只出不进", "location": "西南进站口" },
+    { "id": "E0935", "minute": 35, "time": "09:35", "name": "西广场候车与回流", "location": "1F西广场" },
+    { "id": "E0946", "minute": 46, "time": "09:46", "name": "疏散基本完成", "location": "全站" },
+    { "id": "E0947", "minute": 47, "time": "09:47", "name": "响应结束", "location": "生产指挥中心" }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "mapCoordinateSystem": "overall_layout_normalized_percent",
+  "baseMap": "public/assets/zhengzhou-east-layout.png",
+  "totalDevices": 39,
+  "deviceClassCounts": { "gate": 4, "broadcast": 6, "display": 5, "door": 4, "sign": 20 },
+  "devices": [
+    { "id": "GATE_SW", "type": "gate", "name": "西南进站口闸机", "floor": 3 },
+    { "id": "GATE_NW", "type": "gate", "name": "西北进站口闸机", "floor": 3 },
+    { "id": "GATE_S", "type": "gate", "name": "正南进站口闸机", "floor": 3 },
+    { "id": "GATE_N", "type": "gate", "name": "正北进站口闸机", "floor": 3 },
+    { "id": "BC_32B", "type": "broadcast", "name": "32B检票口广播", "floor": 3 },
+    { "id": "BC_SERVICE", "type": "broadcast", "name": "服务台广播", "floor": 3 },
+    { "id": "BC_GATE_S", "type": "broadcast", "name": "正南进站口喇叭", "floor": 3 },
+    { "id": "BC_GATE_SW", "type": "broadcast", "name": "西南进站口喇叭", "floor": 3 },
+    { "id": "BC_B8B9", "type": "broadcast", "name": "B8-B9后方广播", "floor": 3 },
+    { "id": "BC_WEST", "type": "broadcast", "name": "一层西广场广播", "floor": 1 },
+    { "id": "DSP_S", "type": "display", "name": "正南进站大屏", "floor": 3 },
+    { "id": "DSP_N", "type": "display", "name": "正北进站大屏", "floor": 3 },
+    { "id": "DSP_SERVICE", "type": "display", "name": "服务台信息屏", "floor": 3 },
+    { "id": "DSP_TICKET", "type": "display", "name": "第八售票处大屏", "floor": 3 },
+    { "id": "DSP_WEST", "type": "display", "name": "西广场引导屏", "floor": 1 },
+    { "id": "DOOR_ELEVATOR", "type": "door", "name": "2/3站台换乘直梯", "floor": 2 },
+    { "id": "DOOR_WEST_PASS", "type": "door", "name": "西广场疏散通道", "floor": 1 },
+    { "id": "DOOR_GREEN_L", "type": "door", "name": "左侧绿色通道", "floor": 1 },
+    { "id": "DOOR_GREEN_R", "type": "door", "name": "右侧绿色通道", "floor": 1 }
+  ],
+  "signIds": [
+    "SIGN_3F_HALL_N", "SIGN_3F_HALL_S", "SIGN_3F_HALL_W1", "SIGN_3F_HALL_W2", "SIGN_3F_GATE_B4",
+    "SIGN_3F_GATE_B5", "SIGN_3F_GATE_B8", "SIGN_3F_GATE_B9", "SIGN_3F_ESCALATOR_S", "SIGN_3F_ESCALATOR_W",
+    "SIGN_2F_PLATFORM_E", "SIGN_2F_PLATFORM_W", "SIGN_2F_ESCALATOR_UP", "SIGN_2F_ESCALATOR_DOWN",
+    "SIGN_1F_WEST_ZONE_A", "SIGN_1F_WEST_ZONE_B", "SIGN_1F_WEST_GREEN_L", "SIGN_1F_WEST_GREEN_R", "SIGN_1F_EXIT_N", "SIGN_1F_EXIT_S"
+  ]
+}

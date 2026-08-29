@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceMode": "simulated_placeholder",
+  "realStreamConnected": false,
+  "displayMode": "floating_draggable_collapsible_window",
+  "canvasInteraction": "drag_pan_with_zoom_controls_no_scrollbar",
+  "timebase": "simulation_clock",
+  "monitors": [
+    { "id": "CAM-01", "name": "西南/西北进站口", "x": 18, "y": 25, "startMinute": 5 },
+    { "id": "CAM-02", "name": "正南进站口", "x": 49, "y": 30, "startMinute": 5 },
+    { "id": "CAM-03", "name": "2/3站台换乘直梯", "x": 50, "y": 49, "startMinute": 5 },
+    { "id": "CAM-04", "name": "2B/3B检票口", "x": 34, "y": 22, "startMinute": 5 },
+    { "id": "CAM-05", "name": "西南落客平台大巴", "x": 31, "y": 80, "startMinute": 29 },
+    { "id": "CAM-06", "name": "应急通信车", "x": 22, "y": 31, "startMinute": 5 }
+  ]
+}
