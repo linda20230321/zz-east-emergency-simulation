@@ -1,6 +1,6 @@
 {
   "name": "zz-east-emergency-sim",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -61,5 +61,5 @@
     "wrangler": "4.92.0"
   },
   "type": "module",
-  "displayName": "\u90d1\u5dde\u4e1c\u7ad9\u5e94\u6025\u758f\u6563\u9ad8\u4fdd\u771f\u4eff\u771f\u7cfb\u7edf"
+  "displayName": "郑州东站应急疏散高保真仿真系统"
 }

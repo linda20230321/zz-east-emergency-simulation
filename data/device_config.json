@@ -1,35 +1,25 @@
 {
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
   "scenarioId": "ZZE-FLOOD-2023-0423",
   "source": "因水害影响北京方向列车大面积晚点旅客滞留疏散应急演练脚本4.23",
-  "mapCoordinateSystem": "overall_layout_normalized_percent",
+  "mapCoordinateSystem": "north_up_normalized_percent",
   "baseMap": "public/assets/zhengzhou-east-layout.png",
   "runtimeSource": "lib/simulation.ts#getDevices",
-  "deviceGroupCount": 43,
-  "physicalAssetCount": 462,
+  "deviceGroupCount": 20,
+  "physicalAssetCount": 27,
   "deviceClassCounts": {
     "gate": 4,
     "broadcast": 6,
     "display": 5,
     "door": 4,
-    "sign": 151,
     "window": 2,
-    "barrier": 240,
-    "radio": 16,
-    "vehicle": 2,
-    "medical": 2,
-    "system": 2,
-    "support": 22,
     "monitor": 6
   },
+  "removedDeviceClasses": ["sign", "barrier", "radio", "vehicle", "medical", "system", "support"],
   "quantityEvidence": [
-    { "type": "broadcast", "quantity": 6, "basis": "32B小区广播1、服务台大音响1、演练便携喇叭4" },
+    { "type": "broadcast", "quantity": 6, "basis": "32B小区广播1、服务台大音响1、便携喇叭4" },
     { "type": "display", "quantity": 5, "basis": "正南/正北/服务台/第八售票处/一层西广场各1" },
-    { "type": "sign", "quantity": 151, "basis": "西广场引导牌48、临时/集结/限流/退改签牌7、区域图4、区域导向牌30、绿色通道牌2、手举车次牌60" },
-    { "type": "barrier", "quantity": 240, "basis": "B8/B9 20、B4/B5 20、一层西广场200" },
-    { "type": "radio", "quantity": 16, "basis": "启动响应9部、现场岗位7部" },
-    { "type": "support", "quantity": 22, "basis": "桌子6、桌签11、展板5" },
-    { "type": "monitor", "quantity": 6, "basis": "脚本固定监控画面1—6" }
+    { "type": "monitor", "quantity": 6, "basis": "四向出口、二层通道和一层西广场共6路" }
   ],
-  "traceability": "每一运行对象包含quantity、location、owner、scriptRef、status和detail字段；当前时间节点的脚本动作会覆盖运行状态和展示文案。"
+  "traceability": "运行界面仅保留闸机、广播、显示屏、通道、售票窗口和监控点；指定删除的设备类别不进入底图、流程或统计。"
 }

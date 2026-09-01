@@ -2,9 +2,8 @@
 
 import { useMemo, useRef, useState } from "react"
 import {
-  ArrowRightLeft,
-  BusFront,
   Cctv,
+  Compass,
   DoorOpen,
   Maximize2,
   Minimize2,
@@ -13,6 +12,7 @@ import {
   PanelTopOpen,
   Radio,
   RotateCcw,
+  Route,
   ScanLine,
   Video,
   Wifi,
@@ -23,26 +23,25 @@ import {
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { createAgentSnapshot, densityColor, getCombinedBounds, type AgentPoint } from "@/lib/agent-density"
+import { computeDynamicRoutes, routePointsToSvg, synchronizeAgentsWithRoutes, type DynamicRoute } from "@/lib/dynamic-routing"
 import type { DeviceState, RegionState } from "@/lib/simulation"
 import { formatSimulationTime } from "@/lib/simulation"
 
 const monitors = [
-  { id: "CAM-01", title: "西南/西北进站口", subtitle: "进站通道关闭与人员转向", x: 18, y: 25, start: 5, side: "left", slot: 1, regionIds: ["perimeter"] },
-  { id: "CAM-02", title: "正南进站口", subtitle: "2小时限行与有序进站", x: 49, y: 30, start: 5, side: "right", slot: 1, regionIds: ["gates"] },
-  { id: "CAM-03", title: "2/3站台换乘直梯", subtitle: "直梯关闭后扶梯分流", x: 50, y: 49, start: 5, side: "left", slot: 2, regionIds: ["platform"] },
-  { id: "CAM-04", title: "2B/3B检票口", subtitle: "排队、分区候车与疏散", x: 34, y: 22, start: 5, side: "right", slot: 2, regionIds: ["gates", "hall"] },
-  { id: "CAM-05", title: "西南落客平台大巴", subtitle: "大巴到位及高普联动旅客登车", x: 31, y: 80, start: 5, side: "left", slot: 3, regionIds: ["plaza"] },
-  { id: "CAM-06", title: "西南落客平台应急通信车", subtitle: "通信保障车辆到位并开展保障", x: 22, y: 81, start: 5, side: "right", slot: 3, regionIds: ["plaza"] },
+  { id: "CAM-01", title: "西南疏散通道", subtitle: "西南路线人员流动与密度", x: 20, y: 29, start: 5, side: "left", slot: 1, regionIds: ["hall", "perimeter"] },
+  { id: "CAM-02", title: "正南疏散通道", subtitle: "正南路线人员流动与密度", x: 50, y: 31, start: 5, side: "right", slot: 1, regionIds: ["hall", "gates"] },
+  { id: "CAM-03", title: "正北疏散通道", subtitle: "正北路线人员流动与密度", x: 70, y: 14, start: 5, side: "left", slot: 2, regionIds: ["hall", "perimeter"] },
+  { id: "CAM-04", title: "西北疏散通道", subtitle: "西北路线人员流动与密度", x: 19, y: 18, start: 5, side: "right", slot: 2, regionIds: ["hall", "perimeter"] },
+  { id: "CAM-05", title: "二层换乘通道", subtitle: "四路客流下行汇合状态", x: 49, y: 50, start: 5, side: "left", slot: 3, regionIds: ["hall", "platform"] },
+  { id: "CAM-06", title: "一层西广场", subtitle: "疏散到达人数与实时承接", x: 31, y: 76, start: 5, side: "right", slot: 3, regionIds: ["hall", "plaza"] },
 ] as const
 
-const routeDefinitions = [
-  { id: "PATH_1", start: 21, end: 35, color: "#ff9e3d", points: "54,20 43,28 27,46 26,72" },
-  { id: "PATH_2", start: 23, end: 35, color: "#ffd54f", points: "37,22 27,28 23,47 31,73" },
-  { id: "PATH_5", start: 26, end: 47, color: "#d06dff", points: "48,20 58,14" },
-  { id: "PATH_6", start: 29, end: 47, color: "#54c8ff", points: "36,22 21,30 29,81" },
-  { id: "PATH_3", start: 35, end: 47, color: "#2fe09b", points: "27,74 27,50 45,29 50,20" },
-  { id: "PATH_4", start: 35, end: 47, color: "#52f3c3", points: "35,75 36,52 49,31 55,21" },
-]
+const stationExits = [
+  { id: "EXIT_N", label: "正北出口", direction: "北", x: 70, y: 14 },
+  { id: "EXIT_S", label: "正南出口", direction: "南", x: 50, y: 31 },
+  { id: "EXIT_SW", label: "西南出口", direction: "西南", x: 20, y: 29 },
+  { id: "EXIT_NW", label: "西北出口", direction: "西北", x: 19, y: 18 },
+] as const
 
 const floorLabelPositions = [
   { floor: "3F", label: "候车层", x: 7.5, y: 23 },
@@ -60,12 +59,10 @@ function DeviceGlyph({ type }: { type: DeviceState["type"] }) {
   if (type === "broadcast") return <Radio />
   if (type === "display") return <Monitor />
   if (type === "door") return <DoorOpen />
-  if (type === "sign") return <ArrowRightLeft />
-  if (type === "vehicle") return <BusFront />
   return <ScanLine />
 }
 
-function SimulatedMonitor({ monitor, minute, agents, regions }: { monitor: (typeof monitors)[number]; minute: number; agents: AgentPoint[]; regions: RegionState[] }) {
+function SimulatedMonitor({ monitor, minute, agents, regions, recommendedRoute }: { monitor: (typeof monitors)[number]; minute: number; agents: AgentPoint[]; regions: RegionState[]; recommendedRoute: DynamicRoute }) {
   const active = minute >= monitor.start && minute < 47
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [collapsed, setCollapsed] = useState(false)
@@ -119,7 +116,7 @@ function SimulatedMonitor({ monitor, minute, agents, regions }: { monitor: (type
             <span className="feed-clock">{formatSimulationTime(minute)} · SIM</span>
             <em>{active ? `同源同步 ${synchronizedCount.toLocaleString()}人` : "设备待触发"}</em>
           </div>
-          <div className="monitor-caption"><strong>{monitor.title}</strong><span>{monitor.subtitle}</span></div>
+          <div className="monitor-caption"><strong>{monitor.title}</strong><span>{monitor.subtitle}</span><small>当前推荐：{recommendedRoute.exit} · 密度{Math.round(recommendedRoute.density * 100)}%</small></div>
           <div className="monitor-source"><Wifi /> 暂未接入真实视频流</div>
         </>
       ) : null}
@@ -138,7 +135,10 @@ export function StationOverviewMap({
   devices: DeviceState[]
   onDeviceSelect: (device: DeviceState) => void
 }) {
-  const agents = useMemo(() => createAgentSnapshot(regions, minute), [regions, minute])
+  const baseAgents = useMemo(() => createAgentSnapshot(regions, minute), [regions, minute])
+  const dynamicRoutes = useMemo(() => computeDynamicRoutes(regions, minute), [regions, minute])
+  const recommendedRoute = dynamicRoutes.find((route) => route.recommended) ?? dynamicRoutes[0]
+  const agents = useMemo(() => synchronizeAgentsWithRoutes(baseAgents, dynamicRoutes, minute), [baseAgents, dynamicRoutes, minute])
   const floorTotals = floorLabelPositions.map((item) => ({
     ...item,
     count: regions.filter((region) => region.floor === item.floor).reduce((sum, region) => sum + region.count, 0),
@@ -147,7 +147,7 @@ export function StationOverviewMap({
   const boardingCount = boardingService
     ? Math.max(1, Math.min(boardingService.simulatedCapacity, Math.round(((minute - boardingService.start) / (boardingService.end - boardingService.start)) * boardingService.simulatedCapacity)))
     : 0
-  const activeRoutes = routeDefinitions.filter((route) => minute >= route.start && minute < route.end)
+  const activeRoutes = minute >= 21 && minute < 35 ? dynamicRoutes : []
   const liveCallouts = devices.filter((device) => (device.type === "broadcast" || device.type === "display") && device.tone !== "normal" && device.tone !== "offline").filter((device, index, list) => list.findIndex((candidate) => candidate.type === device.type && candidate.floor === device.floor && candidate.x === device.x && candidate.y === device.y && candidate.detail === device.detail) === index)
   const [dismissedCallouts, setDismissedCallouts] = useState<Set<string>>(new Set())
   const [reopenedCallout, setReopenedCallout] = useState<string | null>(null)
@@ -175,7 +175,7 @@ export function StationOverviewMap({
       className={`overview-map-stage ${isPanning ? "is-panning" : ""}`}
       onPointerDown={(event) => {
         const target = event.target as HTMLElement
-        if (target.closest("button, .floating-monitor, .device-callout, .map-device-legend, .bus-indicator")) return
+        if (target.closest("button, .floating-monitor, .device-callout, .map-device-legend, .route-recommendation-panel")) return
         panOrigin.current = { pointerX: event.clientX, pointerY: event.clientY, x: view.x, y: view.y }
         setIsPanning(true)
         event.currentTarget.setPointerCapture(event.pointerId)
@@ -223,28 +223,48 @@ export function StationOverviewMap({
       </div>
 
       {monitorsOpen ? <div className="monitor-panel-dock" aria-label="六路视频监控面板">
-        <div className="monitor-panel-heading"><Cctv /> 六路视频监控 · 同源Agent快照</div>
-        <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} agents={agents} regions={regions} />)}</div>
+        <div className="monitor-panel-heading"><Cctv /> 六路视频监控 · 底图/人员/路线同源同步</div>
+        <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} agents={agents} regions={regions} recommendedRoute={recommendedRoute} />)}</div>
       </div> : null}
+
+      <section className="route-recommendation-panel" aria-label="动态疏散路径生成与推荐" data-route-engine="improved-a-star-manhattan-density">
+        <header><div><Route /><span>动态路径推荐</span></div><b>{minute >= 21 && minute < 35 ? "持续重算" : "预计算待命"}</b></header>
+        <p>改进型 A* · 曼哈顿距离 + 实时密度 + 转向代价</p>
+        <div className="route-card-grid">
+          {[...dynamicRoutes].sort((a, b) => a.score - b.score).map((route) => (
+            <article key={route.id} className={route.recommended ? "is-recommended" : ""} style={{ "--route-color": route.color } as React.CSSProperties}>
+              <span>{route.exit}出口{route.recommended ? <em>推荐</em> : null}</span>
+              <strong>{route.distanceMeters}m · {route.estimatedMinutes}min</strong>
+              <small>密度 {Math.round(route.density * 100)}% · 代价 {Math.round(route.score)}</small>
+            </article>
+          ))}
+        </div>
+        <footer>密度变化后自动切换最低综合代价路线 · 最近重算 {formatSimulationTime(minute)}</footer>
+      </section>
 
       <div className="map-pan-layer" style={{ transform: `translate3d(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px), 0) scale(${view.scale})` }}>
         <div className="map-crop-window">
           <div className="map-image-shell">
             <img src="/assets/zhengzhou-east-layout.png" alt="按深色演练界面风格重绘的郑州东站三层总体布局图，依次展示3F候车层、2F站台层和1F出站层" />
             <div className="map-dim-overlay" />
+            <div className="orientation-correction-mask" aria-hidden="true" />
+            <div className="map-compass" aria-label="底图方向：上北、下南、左西、右东"><Compass /><b>北</b><span className="east">东</span><span className="south">南</span><span className="west">西</span></div>
+            <div className="station-exit-layer" aria-label="正南、正北、西南、西北四个出口">
+              {stationExits.map((exit) => <span key={exit.id} className={`station-exit station-exit-${exit.id.toLowerCase()}`} style={{ left: `${exit.x}%`, top: `${exit.y}%` }}><i>{exit.direction}</i>{exit.label}</span>)}
+            </div>
 
             <svg className="route-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="动态疏散与回流路线">
           <defs>
-            {routeDefinitions.map((route) => (
+            {dynamicRoutes.map((route) => (
               <marker key={route.id} id={`arrow-${route.id}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill={route.color} />
               </marker>
             ))}
           </defs>
           {activeRoutes.map((route) => (
-            <g key={route.id} className="animated-route">
-              <polyline points={route.points} stroke={route.color} markerEnd={`url(#arrow-${route.id})`} />
-              <polyline className="route-glow" points={route.points} stroke={route.color} />
+            <g key={route.id} className={`animated-route ${route.recommended ? "is-recommended" : ""}`}>
+              <path d={routePointsToSvg(route.points)} stroke={route.color} markerEnd={`url(#arrow-${route.id})`} />
+              <path className="route-glow" d={routePointsToSvg(route.points)} stroke={route.color} />
             </g>
           ))}
             </svg>
@@ -310,9 +330,8 @@ export function StationOverviewMap({
       </div>
 
       <div className="map-device-legend">
-        <span><ScanLine />闸机/系统</span><span><Radio />广播/对讲</span><span><Monitor />信息屏</span><span><DoorOpen />通道</span><span><ArrowRightLeft />标牌/隔离</span><span><BusFront />车辆</span><span><Cctv />监控点</span>
+        <span><ScanLine />闸机</span><span><Radio />广播</span><span><Monitor />信息屏</span><span><DoorOpen />通道</span><span><Cctv />监控点</span>
       </div>
-      {minute >= 29 && minute < 47 ? <div className="bus-indicator"><BusFront /> 高普联动车辆已就位</div> : null}
     </div>
   )
 }

@@ -204,3 +204,7 @@ ON CONFLICT (version) DO NOTHING;
 INSERT INTO schema_version(version, checksum, description)
 VALUES ('0.7.0', 'HD-MAP-DOT-ONLY-BOARDING-2026-09-01', '高清无标题底图、圆点化密度、楼层人数与站台乘车联动交付基线')
 ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.8.0', 'NORTH-UP-DYNAMIC-ASTAR-2026-09-01', '北向校正、四向出口、精简设备、动态A星路线及监控同源交付基线')
+ON CONFLICT (version) DO NOTHING;

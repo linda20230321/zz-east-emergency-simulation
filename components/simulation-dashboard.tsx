@@ -37,7 +37,7 @@ import {
 import { getScriptRuntimeStep } from "@/lib/scenario-script"
 
 const speeds = [0.5, 1, 2, 5, 10]
-const deviceTypeNames: Record<DeviceState["type"], string> = { gate: "闸机/通道", broadcast: "广播/喇叭", display: "显示屏", door: "直梯/通道", sign: "标牌/导向", window: "售票窗口", barrier: "隔离带", radio: "对讲机", vehicle: "保障车辆", medical: "医疗点", system: "业务系统", support: "演练保障" }
+const deviceTypeNames: Record<DeviceState["type"], string> = { gate: "闸机/通道", broadcast: "广播/喇叭", display: "显示屏", door: "直梯/通道", window: "售票窗口" }
 const deviceTypeOrder = Object.keys(deviceTypeNames) as DeviceState["type"][]
 
 function useAnimatedNumber(value: number) {
@@ -191,7 +191,7 @@ export function SimulationDashboard() {
           </div>
           <div className="system-status">
             <span className="pulse-dot" />
-            <div><b>系统在线</b><small>同源态势交付版 v0.7.0</small></div>
+            <div><b>系统在线</b><small>动态路径交付版 v0.8.0</small></div>
           </div>
         </header>
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 import test from "node:test"
 import { computeKdeHeatmap, createAgentSnapshot, isAgentInsideRegion } from "../lib/agent-density.ts"
+import { computeDynamicRoutes, improvedAStar, manhattanDistance, synchronizeAgentsWithRoutes } from "../lib/dynamic-routing.ts"
 
 const readJson = async (file) => JSON.parse(await readFile(new URL(`../${file}`, import.meta.url), "utf8"))
 
@@ -18,23 +19,25 @@ test("时间线覆盖09:00至09:47且严格递增", async () => {
   assert.ok(data.events.every((event, index, list) => index === 0 || event.minute > list[index - 1].minute))
 })
 
-test("脚本设备、物资与数量映射完整", async () => {
+test("设备精简范围与数量映射完整", async () => {
   const data = await readJson("data/device_config.json")
-  assert.equal(data.schemaVersion, "2.0.0")
+  assert.equal(data.schemaVersion, "3.0.0")
+  assert.equal(data.deviceClassCounts.gate, 4)
   assert.equal(data.deviceClassCounts.broadcast, 6)
   assert.equal(data.deviceClassCounts.display, 5)
-  assert.equal(data.deviceClassCounts.sign, 151)
-  assert.equal(data.deviceClassCounts.barrier, 240)
-  assert.equal(data.deviceClassCounts.radio, 16)
+  assert.equal(data.deviceClassCounts.door, 4)
+  assert.equal(data.deviceClassCounts.window, 2)
   assert.equal(data.deviceClassCounts.monitor, 6)
+  assert.deepEqual(data.removedDeviceClasses, ["sign", "barrier", "radio", "vehicle", "medical", "system", "support"])
   assert.equal(Object.values(data.deviceClassCounts).reduce((sum, value) => sum + value, 0), data.physicalAssetCount)
 })
 
 test("每个脚本节点包含流程、岗位职责与设备操作映射", async () => {
   const source = await readFile(new URL("../lib/scenario-script.ts", import.meta.url), "utf8")
   for (const time of ["09:00", "09:02", "09:05", "09:12", "09:13", "09:17", "09:19", "09:21", "09:23", "09:26", "09:29", "09:32", "09:35", "09:46", "09:47"]) assert.match(source, new RegExp(time))
-  for (const token of ["roles", "actions", "monitorIds", "32B检票口小区广播", "正南进站大屏", "50、51号售票窗口", "隔离带200根"]) assert.match(source, new RegExp(token))
+  for (const token of ["roles", "actions", "monitorIds", "32B检票口小区广播", "正南进站大屏", "50、51号售票窗口", "改进型A\\*"]) assert.match(source, new RegExp(token))
   for (const token of ["getScriptRuntimeStep", "G806放行宣传", "G1808放行宣传", "G51绿色通道宣传"]) assert.match(source, new RegExp(token))
+  for (const token of ["公告牌", "隔离带", "对讲机", "大巴车", "应急通信车", "医疗点", "旅服系统", "12306原退系统", "演练桌"]) assert.doesNotMatch(source, new RegExp(token))
 })
 
 test("六路监控均为明确标识的仿真占位源", async () => {
@@ -44,6 +47,7 @@ test("六路监控均为明确标识的仿真占位源", async () => {
   assert.equal(data.realStreamConnected, false)
   assert.equal(data.displayMode, "floating_draggable_collapsible_window")
   assert.equal(data.canvasInteraction, "drag_pan_with_zoom_controls_no_scrollbar")
+  assert.equal(data.routeStateSource, "lib/dynamic-routing.ts#computeDynamicRoutes")
   assert.ok(data.monitors.every((monitor) => monitor.scriptScene))
 })
 
@@ -59,6 +63,7 @@ test("三层使用同一总体布局底图且无楼层标签切换", async () =>
   assert.equal(baseMap.readUInt32BE(16), 1842)
   assert.equal(baseMap.readUInt32BE(20), 3414)
   for (const token of ["floor-total-layer", "各楼层实时总人数", "boardingServices", "站台乘车联动", "乘车人数", "2道", "综控未指定"]) assert.match(overview, new RegExp(token))
+  for (const token of ["map-compass", "正南出口", "正北出口", "西南出口", "西北出口", "上北、下南、左西、右东"]) assert.match(overview, new RegExp(token))
 })
 
 test("总图支持无滚动条拖拽缩放且监控面板可折叠", async () => {
@@ -94,7 +99,7 @@ test("KDE算法、圆点人员与监控采用同一Agent快照且Web无热力网
   assert.doesNotMatch(overview, /<polygon/)
   assert.doesNotMatch(overview, /density-summary-layer|density-heat-legend|· d=/)
   assert.match(overview, /agents=\{agents\}/)
-  assert.match(overview, /同源Agent快照/)
+  assert.match(overview, /底图\/人员\/路线同源同步/)
   assert.match(overview, /overview-passenger/)
   assert.doesNotMatch(overview, /kde-heatmap-layer|heatCells\.map|<rect/)
   assert.match(shader, /density < 0\.30/)
@@ -119,14 +124,40 @@ test("全部时间采样的Agent显示范围、人数权重与KDE归一化有效
   }
 })
 
-test("8条业务路径完整", async () => {
+test("四向动态路径使用融合曼哈顿距离的改进型A星并随密度切换推荐", async () => {
   const data = await readJson("data/path_network.json")
-  assert.deepEqual(data.paths.map((item) => item.id), ["PATH_1", "PATH_2", "PATH_3", "PATH_4", "PATH_5", "PATH_6", "PATH_7", "PATH_8"])
+  assert.equal(data.engine, "improved_a_star")
+  assert.equal(data.heuristic, "manhattan_distance")
+  assert.deepEqual(data.exitDirections, ["正南", "正北", "西南", "西北"])
+  assert.deepEqual(data.paths.map((item) => item.id), ["EVAC_SW", "EVAC_S", "EVAC_N", "EVAC_NW"])
+  assert.equal(manhattanDistance({ x: 2, y: 3 }, { x: 8, y: 10 }), 13)
+  assert.ok(improvedAStar("HALL_CORE", "WEST_PLAZA", "西南", 0.2).length >= 5)
+
+  const recommendations = new Set()
+  for (const minute of [22, 26, 30, 33]) {
+    const regions = [
+      { id: "hall", name: "3F候车大厅", floor: "3F", count: 26000, capacity: 35000, density: 26000 / 35000 },
+      { id: "plaza", name: "1F西广场候车区", floor: "1F", count: Math.round((minute - 21) * 900), capacity: 18000, density: Math.min(1, ((minute - 21) * 900) / 18000) },
+    ]
+    const routes = computeDynamicRoutes(regions, minute)
+    assert.equal(routes.length, 4)
+    assert.equal(routes.filter((route) => route.recommended).length, 1)
+    assert.ok(routes.every((route) => route.points[0].x === 52 && route.points.at(-1).x === 31))
+    recommendations.add(routes.find((route) => route.recommended).id)
+    const agents = createAgentSnapshot(regions, minute)
+    const synchronized = synchronizeAgentsWithRoutes(agents, routes, minute)
+    assert.equal(synchronized.length, agents.length)
+    assert.ok(synchronized.some((agent, index) => agent.x !== agents[index].x || agent.y !== agents[index].y))
+  }
+  assert.ok(recommendations.size >= 3, "客流变化后推荐路线应发生切换")
 })
 
 test("数据库包含回放、指标、审计和追溯表", async () => {
   const sql = await readFile(new URL("../database/001_schema.sql", import.meta.url), "utf8")
+  const seed = await readFile(new URL("../database/002_seed_baseline.sql", import.meta.url), "utf8")
   for (const table of ["state_snapshot", "region_metric", "device_event_log", "consistency_check", "requirement_trace", "change_record"]) {
     assert.match(sql, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`))
   }
+  assert.match(sql, /VALUES \('0\.8\.0', 'NORTH-UP-DYNAMIC-ASTAR-2026-09-01'/)
+  assert.match(seed, /'09:00', '09:47', '0\.8\.0', 'approved'/)
 })

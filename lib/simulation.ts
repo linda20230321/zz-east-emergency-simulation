@@ -24,7 +24,7 @@ export type RegionState = {
 export type DeviceState = {
   id: string
   name: string
-  type: "gate" | "broadcast" | "display" | "door" | "sign" | "window" | "barrier" | "radio" | "vehicle" | "medical" | "system" | "support"
+  type: "gate" | "broadcast" | "display" | "door" | "window"
   floor: FloorId
   x: number
   y: number
@@ -44,16 +44,16 @@ export const TOTAL_PASSENGERS = 37000
 export const events: SimulationEvent[] = [
   { minute: 0, time: "09:00", title: "演练背景", location: "生产指挥中心", summary: "京广高铁因水害中断，进入大面积晚点旅客滞留处置场景。", action: "加载37,000名旅客、68列晚点和6列停运的初始条件。", severity: "info" },
   { minute: 2, time: "09:02", title: "启动一级响应", location: "生产指挥中心", summary: "集团公司调度所下达I级应急响应命令。", action: "六个应急小组接令，系统记录响应启动事件。", severity: "critical" },
-  { minute: 5, time: "09:05", title: "岗位到位与限流", location: "全站", summary: "应急人员到岗，西南/西北口关闭，南北主入口实施2小时限行。", action: "闸机、换乘直梯和疏散指示状态联动，路径网络重算。", severity: "critical" },
+  { minute: 5, time: "09:05", title: "岗位到位与限流", location: "全站", summary: "应急人员到岗，西南/西北口关闭，南北主入口实施2小时限行。", action: "闸机、换乘直梯状态联动，动态路径网络开始预计算。", severity: "critical" },
   { minute: 12, time: "09:12", title: "客运车间响应", location: "生产指挥中心", summary: "综控、售票、进站口、一层疏散、站台和服务台岗位完成部署。", action: "岗位态势更新为已到位。", severity: "warning" },
-  { minute: 13, time: "09:13", title: "综控计划处置", location: "综控计划室", summary: "核对晚点、停运、接续列车和旅服系统数据。", action: "加载列车数据并形成接续疏散建议。", severity: "info" },
+  { minute: 13, time: "09:13", title: "综控计划处置", location: "综控计划室", summary: "核对晚点、停运和接续列车信息。", action: "加载列车数据并形成接续疏散建议。", severity: "info" },
   { minute: 17, time: "09:17", title: "晚点广播", location: "32B检票口", summary: "循环播放致歉、停运退票和分区候车广播。", action: "广播设备进入自动播报，停运旅客获得退票与分流信息。", severity: "warning" },
   { minute: 19, time: "09:19", title: "停运信息发布", location: "服务台/南北进站口", summary: "进站大屏和服务台广告屏同步显示停运公告。", action: "信息屏切换应急模式，服务台进行人工解释。", severity: "warning" },
   { minute: 21, time: "09:21", title: "大规模疏散启动", location: "3F候车厅→1F西广场", summary: "两小时以外旅客沿主疏散路径转移至一层西广场。", action: "西广场通道单向开启，路径1全线标识点亮。", severity: "critical" },
-  { minute: 23, time: "09:23", title: "候车分区组织", location: "B8-B9后方", summary: "启用1—2小时临时候车区与2小时以上集结区。", action: "隔离带和路径2支线生效，客流按车次分区。", severity: "warning" },
+  { minute: 23, time: "09:23", title: "候车分区组织", location: "B8-B9后方", summary: "启用1—2小时临时候车区与2小时以上集结区。", action: "根据实时密度重算四条候选路线，客流按推荐路径分流。", severity: "warning" },
   { minute: 26, time: "09:26", title: "增开退改签窗口", location: "第八售票处", summary: "50、51号窗口增开并显示晚点、停运列车退票公告。", action: "退票流线激活，售票处客流增加。", severity: "info" },
-  { minute: 29, time: "09:29", title: "高普联动", location: "B4-B5/西南落客平台", summary: "新乡、安阳方向旅客乘大巴转往郑州站接续普速列车。", action: "大巴与路径6高亮，组织旅客下行转运。", severity: "warning" },
-  { minute: 32, time: "09:32", title: "西南口只出不进", location: "西南进站口", summary: "扶梯三层节点实施宣传和限流。", action: "指向西南口的进站标识关闭，疏散方向保持单向。", severity: "warning" },
+  { minute: 29, time: "09:29", title: "密度驱动分流优化", location: "候车室→一层西广场", summary: "四条疏散通道根据实时客流密度持续分担下行旅客。", action: "融合曼哈顿距离的改进型A*重新排序候选路线并切换推荐。", severity: "warning" },
+  { minute: 32, time: "09:32", title: "西南口只出不进", location: "西南进站口", summary: "扶梯三层节点实施宣传和限流。", action: "西南通道保持单向疏散，其他三条通道继续动态分流。", severity: "warning" },
   { minute: 35, time: "09:35", title: "西广场候车与回流", location: "1F西广场", summary: "G806、G1808、G51等旅客分批通过绿色通道回流。", action: "路径3/4反向激活，绿色通道和回流标识闪烁。", severity: "critical" },
   { minute: 46, time: "09:46", title: "疏散基本完成", location: "全站", summary: "候车厅控制在约2万人，西广场秩序正常。", action: "部分应急标识关闭，保持分批进站。", severity: "success" },
   { minute: 47, time: "09:47", title: "响应结束", location: "生产指挥中心", summary: "京广高铁运输秩序逐步恢复，I级响应结束。", action: "所有设备恢复常规状态并生成复盘快照。", severity: "success" },
@@ -119,7 +119,7 @@ export function getDevices(minute: number): DeviceState[] {
     ["便携喇叭4号", "1F", 34, 76, "待命", "陈颖"],
   ] as const : minute >= 35 && minute < 38 ? [
     ["二层平台宣传喇叭", "2F", 29, 54, "应急演练通知：旅客们，您好，目前由于候车厅限流，请您按A、B检票口顺序、车次信息找到您所乘坐列车的候车位置，并在相应候车区域耐心等候，听从工作人员指挥统一进站。开车前半小时到达的旅客可以直接从进口两侧的绿色通道快速进站。", "高山"],
-    ["西广场外侧通道喇叭", "1F", 24, 76, "应急演练通知：旅客朋友们，请按车次牌信息找到您所乘坐列车的候车位置，并耐心等候，感谢您的配合。", "张琛"],
+    ["西广场外侧通道喇叭", "1F", 24, 76, "应急演练通知：旅客朋友们，请按车次信息找到您所乘坐列车的候车位置，并耐心等候，感谢您的配合。", "张琛"],
     ["西广场候车区内喇叭", "1F", 34, 76, "应急演练通知：旅客朋友们，因水害造成列车大面积晚点，目前郑州东站采取限时候车制度，请您耐心在一层西广场候车区候车，听从工作人员指挥统一进站。", "陈颖"],
     ["西广场中部通道喇叭", "1F", 31, 78, "应急演练通知：请对应车次旅客听从工作人员指挥统一在一层西广场候车区中部排队进站；刚到达的旅客可根据指示标识从进站口两侧绿色通道直接进站，请提前准备好身份证并取出行李中液体物品。", "张雯"],
   ] as const : minute >= 32 && minute < 35 ? [
@@ -128,7 +128,7 @@ export function getDevices(minute: number): DeviceState[] {
     ["1F西南扶梯喇叭", "1F", 23, 72, "旅客您好，因水害造成列车大面积晚点，郑州东站采取限时候车制度，请您凭当日当次车票于列车开车前两小时进入候车室，请持G258、G51、G1165、G806、G652、G3148车次的旅客前往一层西广场候车区进行候车。", "梁苡菲"],
     ["便携喇叭4号", "1F", 35, 78, "待命", "一层疏散组"],
   ] as const : minute >= 26 && minute < 32 ? [
-    ["第八售票处手持喇叭", "3F", 58, 13, "已购买停运列车车票的旅客，可在30日内通过12306手机客户端或全国任意车站售票处免费办理退票手续。已购买晚点30分钟以上列车车票的旅客，可在列车实际发车时间前通过12306手机客户端免费办理退票手续。想要重新购买车票或者到落客平台乘坐大巴车的旅客请向左直走出站。", "任欣韫"],
+    ["第八售票处手持喇叭", "3F", 58, 13, "已购买停运列车车票的旅客，可在30日内通过12306手机客户端或全国任意车站售票处免费办理退票手续。已购买晚点30分钟以上列车车票的旅客，可在列车实际发车时间前通过12306手机客户端免费办理退票手续。", "任欣韫"],
     ["B4/B5集结区喇叭", "3F", 36, 24, "乘坐G258、G51、G1165、G806、G652、G3148的旅客请跟随工作人员至一层西广场候车区候车。", "崔扬/冯桦"],
     ["便携喇叭3号", "1F", 29, 76, "待命", "一层疏散组"],
     ["便携喇叭4号", "1F", 35, 76, "待命", "一层疏散组"],
@@ -149,19 +149,6 @@ export function getDevices(minute: number): DeviceState[] {
     ["便携喇叭4号", "1F", 35, 76, "待命", "一层疏散组"],
   ] as const
   const portableDevices = portableConfigs.map(([name, floor, x, y, detail, owner], index) => device(`BC_PORTABLE_${index + 1}`, name, "broadcast", floor, x, y, detail === "待命" ? "待机" : "正在播报", detail === "待命" ? "normal" : "active", detail, 1, name.replace("喇叭", "点位"), owner, minute >= 35 ? "09:35" : minute >= 32 ? "09:32" : minute >= 26 ? "09:26/09:29" : minute >= 23 ? "09:23" : minute >= 21 ? "09:21" : "09:05"))
-  const signDevices: DeviceState[] = [
-    device("SIGN_WEST_48", "一层西广场固定引导牌", "sign", "1F", 29, 76, emergency ? "布设到位" : "库房待用", emergency ? "warning" : "normal", "脚本明确配置48块，用于一层西广场分区候车和进站引导。", 48, "一层西广场候车区", "程冠楠/席宇", "09:05"),
-    device("SIGN_B8B9", "1—2小时临时公告牌", "sign", "3F", 43, 21, minute >= 23 && minute < 35 ? "启用" : "未启用", minute >= 23 && minute < 35 ? "active" : "offline", "G1163、G651、G1878、G3168、G421、G6642、G7932、G7972旅客在此等候。", 1, "B8/B9检票口后方", "陈洋", "09:23"),
-    device("SIGN_B4B5", "2小时以上集结区公告牌", "sign", "3F", 36, 24, minute >= 23 && minute < 35 ? "启用" : "未启用", minute >= 23 && minute < 35 ? "active" : "offline", "G258、G51、G1165、G806、G652、G3148旅客在此等候。", 1, "B4/B5检票口后方", "孙佳", "09:23"),
-    device("SIGN_SOUTH", "正南进站口临时公告牌", "sign", "3F", 49, 31, minute >= 21 && minute < 47 ? "显示限流公告" : "未启用", minute >= 21 && minute < 47 ? "warning" : "offline", "因水害影响，限两小时以内车次进站。", 1, "正南进站口", "马瑞", "09:21"),
-    device("SIGN_TICKET", "退改签临时公告牌", "sign", "3F", 59, 12, minute >= 26 && minute < 47 ? "启用" : "未启用", minute >= 26 && minute < 47 ? "active" : "offline", "晚点、停运列车退票改签指引。", 3, "第八售票处", "郭艳红", "09:26"),
-    device("SIGN_SW", "西南进站口临时公告牌", "sign", "3F", 19, 29, minute >= 32 && minute < 47 ? "显示只出不进及限流公告" : "未启用", minute >= 32 && minute < 47 ? "warning" : "offline", "因水害影响，限两小时以内车次进站乘车。", 1, "西南进站口", "马瑞", "09:32"),
-    device("SIGN_WEST_MAP", "一层西广场候车区域图", "sign", "1F", 29, 74, returning ? "四角布设" : "未启用", returning ? "active" : "offline", "显示一层西广场南北区、A/B检票口和中部通道关系。", 4, "一层西广场四角", "一层疏散组", "09:35"),
-    device("SIGN_WEST_GUIDE", "一层西广场区域导向牌", "sign", "1F", 31, 76, returning ? "中通道布设" : "未启用", returning ? "active" : "offline", "按A、B检票口顺序和车次信息引导分区候车。", 30, "一层西广场中通道", "一层疏散组", "09:35"),
-    device("SIGN_GREEN", "绿色通道宣传牌", "sign", "1F", 24, 72, returning ? "绿色通道启用" : "未启用", returning ? "active" : "offline", "开车前半小时到达旅客可从两侧绿色通道快速进站。", 2, "一层西广场进站口两侧", "刘婉晴", "09:35"),
-    device("SIGN_HAND", "手举车次牌", "sign", "1F", 35, 77, returning ? "按车次动态使用" : "待用", returning ? "active" : "normal", "用于G806、G1808、G51等车次旅客带队进站。", 60, "一层西广场各候车区", "志愿者/带队人员", "09:35"),
-  ]
-
   const allDevices: DeviceState[] = [
     device("GATE_SW", "西南进站通道", "gate", "3F", 18, 29, emergency ? "关闭/只出不进" : "开放", emergency ? "offline" : "normal", "关闭西南进站通道，引导两小时外旅客前往一层西广场候车区。", 1, "3F西南进站口", "宋衍斌/马瑞", "09:05/09:32"),
     device("GATE_NW", "西北进站通道", "gate", "3F", 19, 18, emergency ? "关闭" : "开放", emergency ? "offline" : "normal", "关闭西北进站通道并实施旅客分流。", 1, "3F西北进站口", "宋衍斌", "09:05"),
@@ -180,20 +167,6 @@ export function getDevices(minute: number): DeviceState[] {
     device("DOOR_WEST_PASS", "西广场疏散通道", "door", "1F", 22, 72, evacuating ? "单向疏散" : returning ? "双向组织" : "关闭", evacuating || returning ? "active" : "offline", "承担三层至一层西广场的下行疏散和后续分批回流。", 1, "1F西广场西侧", "程冠楠/张雯", "09:21/09:35"),
     device("DOOR_GREEN_L", "左侧绿色通道", "door", "1F", 25, 75, returning ? "快速进站" : "关闭", returning ? "active" : "offline", "供开车前半小时到达及G51等即将开检旅客快速进站。", 1, "1F西广场进站口左侧", "刘婉晴", "09:35"),
     device("DOOR_GREEN_R", "右侧绿色通道", "door", "1F", 35, 75, returning ? "快速进站" : "关闭", returning ? "active" : "offline", "供开车前半小时到达及G51等即将开检旅客快速进站。", 1, "1F西广场进站口右侧", "刘婉晴", "09:35"),
-    device("BARRIER_B8B9", "B8/B9隔离带", "barrier", "3F", 42, 22, minute >= 23 && minute < 35 ? "完成分区" : "未布设", minute >= 23 && minute < 35 ? "active" : "offline", "形成1—2小时临时候车区。", 20, "B8/B9检票口后方", "客运组织组", "09:23"),
-    device("BARRIER_B4B5", "B4/B5隔离带", "barrier", "3F", 36, 25, minute >= 29 && minute < 35 ? "完成集结区" : "未布设", minute >= 29 && minute < 35 ? "active" : "offline", "形成2小时以上旅客集结区。", 20, "B4/B5检票口后方", "检票口组织", "09:29"),
-    device("BARRIER_WEST", "一层西广场隔离带", "barrier", "1F", 32, 78, returning ? "划分南北区及中部通道" : "未布设", returning ? "active" : "offline", "用于南北分区候车及中部排队进站。", 200, "一层西广场候车区", "张雯", "09:35"),
-    device("RADIO_CMD", "生产指挥中心对讲机", "radio", "3F", 58, 10, minute >= 2 && minute < 12 ? "应急联络" : "待机", minute >= 2 && minute < 12 ? "active" : "normal", "六个应急小组接令及到岗汇报。", 9, "生产指挥中心", "刘海涛/王留强", "09:02"),
-    device("RADIO_FIELD", "现场岗位对讲机", "radio", "2F", 51, 52, minute >= 12 && minute < 47 ? "岗位联控" : "待机", minute >= 12 && minute < 47 ? "active" : "normal", "用于综控、进站口、站台、一层西广场和各应急小组联控。", 7, "全站现场岗位", "客运车间", "09:12—09:47"),
-    device("VEHICLE_BUS", "高普联动大巴车", "vehicle", "1F", 31, 82, minute >= 5 && minute < 29 ? "到位待命" : minute >= 29 && minute < 47 ? "接驳运行" : "未到位", minute >= 5 && minute < 47 ? "active" : "normal", "疏散新乡、安阳方向旅客至郑州站接续K600次列车。", 1, "西南落客平台", "交通运输集团", "09:05/09:29"),
-    device("VEHICLE_COMMS", "应急通信保障车", "vehicle", "1F", 22, 81, emergency ? "通信保障" : "未到位", emergency ? "active" : "normal", "停靠西南落客平台开展应急通信保障。", 1, "西南落客平台", "通信管理局", "09:05"),
-    device("MEDICAL_WEST", "临时医疗救助点", "medical", "1F", 37, 79, emergency ? "启用" : "未启用", emergency ? "active" : "normal", "一层西广场设置2个临时医疗救助点。", 2, "一层西广场", "郑东新区社会事业局", "09:05"),
-    device("SYS_TRAVEL", "旅服系统", "system", "3F", 55, 9, minute >= 13 && minute < 47 ? "晚点信息已同步" : "常规运行", minute >= 13 && minute < 47 ? "active" : "normal", "核对CTC并更新8列1小时内晚点列车信息。", 1, "综控计划室", "魏芳园", "09:13"),
-    device("SYS_12306", "12306原退系统", "system", "3F", 57, 9, minute >= 13 && minute < 47 ? "原退定义生效" : "常规运行", minute >= 13 && minute < 47 ? "active" : "normal", "晚点30分钟以上列车可在实际发车前自行退票。", 1, "计划室/12306平台", "郭杨", "09:13"),
-    device("SUPPORT_TABLE", "演练桌子", "support", "3F", 62, 9, minute >= 2 ? "布置到位" : "待布置", minute >= 2 ? "active" : "normal", "生产指挥中心演练席位。", 6, "生产指挥中心", "演练保障组", "09:02"),
-    device("SUPPORT_NAMEPLATE", "演练桌签", "support", "3F", 63, 9, minute >= 2 ? "布置到位" : "待布置", minute >= 2 ? "active" : "normal", "指挥及应急小组席位标识。", 11, "生产指挥中心", "演练保障组", "09:02"),
-    device("SUPPORT_BOARD", "演练展板", "support", "3F", 64, 9, minute >= 2 ? "布置到位" : "待布置", minute >= 2 ? "active" : "normal", "演练流程和分组展示。", 5, "生产指挥中心", "演练保障组", "09:02"),
-    ...signDevices,
   ]
 
   return allDevices.map((item) => {
