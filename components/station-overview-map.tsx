@@ -22,27 +22,17 @@ import {
 } from "lucide-react"
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { createAgentSnapshot, densityColor, getCombinedBounds, type AgentPoint } from "@/lib/agent-density"
 import type { DeviceState, RegionState } from "@/lib/simulation"
-import { densityTone, formatSimulationTime } from "@/lib/simulation"
-
-type PassengerDot = { id: number; x: number; y: number; tone: string; delay: number }
-
-const regionBoxes: Record<string, { x: number; y: number; w: number; h: number }> = {
-  hall: { x: 28, y: 12, w: 48, h: 17 },
-  perimeter: { x: 15, y: 10, w: 68, h: 21 },
-  gates: { x: 29, y: 16, w: 43, h: 9 },
-  ticket: { x: 53, y: 9, w: 14, h: 7 },
-  platform: { x: 16, y: 38, w: 70, h: 18 },
-  plaza: { x: 20, y: 68, w: 28, h: 11 },
-}
+import { formatSimulationTime } from "@/lib/simulation"
 
 const monitors = [
-  { id: "CAM-01", title: "西南/西北进站口", subtitle: "进站通道关闭与人员转向", x: 18, y: 25, start: 5, side: "left", slot: 1 },
-  { id: "CAM-02", title: "正南进站口", subtitle: "2小时限行与有序进站", x: 49, y: 30, start: 5, side: "right", slot: 1 },
-  { id: "CAM-03", title: "2/3站台换乘直梯", subtitle: "直梯关闭后扶梯分流", x: 50, y: 49, start: 5, side: "left", slot: 2 },
-  { id: "CAM-04", title: "2B/3B检票口", subtitle: "排队、分区候车与疏散", x: 34, y: 22, start: 5, side: "right", slot: 2 },
-  { id: "CAM-05", title: "西南落客平台大巴", subtitle: "高普联动旅客登车", x: 31, y: 80, start: 29, side: "left", slot: 3 },
-  { id: "CAM-06", title: "应急通信车", subtitle: "通信保障车辆就位", x: 22, y: 31, start: 5, side: "right", slot: 3 },
+  { id: "CAM-01", title: "西南/西北进站口", subtitle: "进站通道关闭与人员转向", x: 18, y: 25, start: 5, side: "left", slot: 1, regionIds: ["perimeter"] },
+  { id: "CAM-02", title: "正南进站口", subtitle: "2小时限行与有序进站", x: 49, y: 30, start: 5, side: "right", slot: 1, regionIds: ["gates"] },
+  { id: "CAM-03", title: "2/3站台换乘直梯", subtitle: "直梯关闭后扶梯分流", x: 50, y: 49, start: 5, side: "left", slot: 2, regionIds: ["platform"] },
+  { id: "CAM-04", title: "2B/3B检票口", subtitle: "排队、分区候车与疏散", x: 34, y: 22, start: 5, side: "right", slot: 2, regionIds: ["gates", "hall"] },
+  { id: "CAM-05", title: "西南落客平台大巴", subtitle: "大巴到位及高普联动旅客登车", x: 31, y: 80, start: 5, side: "left", slot: 3, regionIds: ["plaza"] },
+  { id: "CAM-06", title: "西南落客平台应急通信车", subtitle: "通信保障车辆到位并开展保障", x: 22, y: 81, start: 5, side: "right", slot: 3, regionIds: ["plaza"] },
 ] as const
 
 const routeDefinitions = [
@@ -54,44 +44,37 @@ const routeDefinitions = [
   { id: "PATH_4", start: 35, end: 47, color: "#52f3c3", points: "35,75 36,52 49,31 55,21" },
 ]
 
-function hash(value: number) {
-  const n = Math.sin(value * 127.1) * 43758.5453
-  return n - Math.floor(n)
-}
+const floorLabelPositions = [
+  { floor: "3F", label: "候车层", x: 7.5, y: 23 },
+  { floor: "2F", label: "站台层", x: 7.5, y: 50 },
+  { floor: "1F", label: "出站层", x: 7.5, y: 76 },
+] as const
 
-function createDots(regions: RegionState[]) {
-  const dots: PassengerDot[] = []
-  let cursor = 0
-  regions.forEach((region) => {
-    const box = regionBoxes[region.id]
-    const count = Math.round(region.count / 50)
-    for (let i = 0; i < count; i += 1) {
-      dots.push({
-        id: cursor + i,
-        x: box.x + hash(i + cursor + 11) * box.w,
-        y: box.y + hash(i + cursor + 41) * box.h,
-        tone: densityTone(region.density),
-        delay: hash(i + cursor + 9) * 1.7,
-      })
-    }
-    cursor += count + 13
-  })
-  return dots
-}
+const boardingServices = [
+  { train: "G806", start: 38, end: 41, platform: "2道", destination: "北京西", simulatedCapacity: 850 },
+  { train: "G1808", start: 41, end: 44, platform: "综控未指定", destination: "上海虹桥", simulatedCapacity: 800 },
+  { train: "G51", start: 44, end: 47, platform: "综控未指定", destination: "重庆北", simulatedCapacity: 650 },
+] as const
 
 function DeviceGlyph({ type }: { type: DeviceState["type"] }) {
   if (type === "broadcast") return <Radio />
   if (type === "display") return <Monitor />
   if (type === "door") return <DoorOpen />
   if (type === "sign") return <ArrowRightLeft />
+  if (type === "vehicle") return <BusFront />
   return <ScanLine />
 }
 
-function SimulatedMonitor({ monitor, minute }: { monitor: (typeof monitors)[number]; minute: number }) {
+function SimulatedMonitor({ monitor, minute, agents, regions }: { monitor: (typeof monitors)[number]; minute: number; agents: AgentPoint[]; regions: RegionState[] }) {
   const active = minute >= monitor.start && minute < 47
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [collapsed, setCollapsed] = useState(false)
   const dragOrigin = useRef<{ pointerX: number; pointerY: number; offsetX: number; offsetY: number } | null>(null)
+  const sourceAgents = agents.filter((agent) => (monitor.regionIds as readonly string[]).includes(agent.regionId))
+  const sampleStep = Math.max(1, Math.ceil(sourceAgents.length / 28))
+  const monitorAgents = sourceAgents.filter((_, index) => index % sampleStep === 0).slice(0, 28)
+  const bounds = getCombinedBounds([...monitor.regionIds])
+  const synchronizedCount = regions.filter((region) => (monitor.regionIds as readonly string[]).includes(region.id)).reduce((sum, region) => sum + region.count, 0)
 
   return (
     <article
@@ -130,11 +113,11 @@ function SimulatedMonitor({ monitor, minute }: { monitor: (typeof monitors)[numb
         <>
           <div className="sim-feed">
             <div className="feed-geometry"><i /><i /><i /></div>
-            {Array.from({ length: active ? 17 : 6 }, (_, index) => (
-              <b key={index} style={{ left: `${10 + hash(index + monitor.slot * 10) * 80}%`, top: `${20 + hash(index + monitor.slot * 30) * 60}%`, animationDelay: `${hash(index) * 1.2}s` }} />
-            ))}
+            {active ? monitorAgents.map((agent) => (
+              <b key={agent.id} style={{ left: `${8 + ((agent.x - bounds.x) / Math.max(1, bounds.w)) * 84}%`, top: `${16 + ((agent.y - bounds.y) / Math.max(1, bounds.h)) * 67}%`, animationDelay: `${agent.delay}s`, background: densityColor(regions.find((region) => region.id === agent.regionId)?.density ?? 0) }} />
+            )) : null}
             <span className="feed-clock">{formatSimulationTime(minute)} · SIM</span>
-            <em>{active ? "仿真画面运行中" : "设备待触发"}</em>
+            <em>{active ? `同源同步 ${synchronizedCount.toLocaleString()}人` : "设备待触发"}</em>
           </div>
           <div className="monitor-caption"><strong>{monitor.title}</strong><span>{monitor.subtitle}</span></div>
           <div className="monitor-source"><Wifi /> 暂未接入真实视频流</div>
@@ -155,9 +138,17 @@ export function StationOverviewMap({
   devices: DeviceState[]
   onDeviceSelect: (device: DeviceState) => void
 }) {
-  const dots = useMemo(() => createDots(regions), [regions])
+  const agents = useMemo(() => createAgentSnapshot(regions, minute), [regions, minute])
+  const floorTotals = floorLabelPositions.map((item) => ({
+    ...item,
+    count: regions.filter((region) => region.floor === item.floor).reduce((sum, region) => sum + region.count, 0),
+  }))
+  const boardingService = boardingServices.find((service) => minute >= service.start && minute < service.end)
+  const boardingCount = boardingService
+    ? Math.max(1, Math.min(boardingService.simulatedCapacity, Math.round(((minute - boardingService.start) / (boardingService.end - boardingService.start)) * boardingService.simulatedCapacity)))
+    : 0
   const activeRoutes = routeDefinitions.filter((route) => minute >= route.start && minute < route.end)
-  const liveCallouts = devices.filter((device) => (device.type === "broadcast" || device.type === "display") && device.tone !== "normal" && device.tone !== "offline").filter((device, index, list) => list.findIndex((candidate) => candidate.type === device.type && candidate.floor === device.floor && candidate.x === device.x && candidate.y === device.y && candidate.detail === device.detail) === index).slice(0, 4)
+  const liveCallouts = devices.filter((device) => (device.type === "broadcast" || device.type === "display") && device.tone !== "normal" && device.tone !== "offline").filter((device, index, list) => list.findIndex((candidate) => candidate.type === device.type && candidate.floor === device.floor && candidate.x === device.x && candidate.y === device.y && candidate.detail === device.detail) === index)
   const [dismissedCallouts, setDismissedCallouts] = useState<Set<string>>(new Set())
   const [reopenedCallout, setReopenedCallout] = useState<string | null>(null)
   const speakCallout = (device: DeviceState) => {
@@ -232,8 +223,8 @@ export function StationOverviewMap({
       </div>
 
       {monitorsOpen ? <div className="monitor-panel-dock" aria-label="六路视频监控面板">
-        <div className="monitor-panel-heading"><Cctv /> 六路视频监控</div>
-        <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} />)}</div>
+        <div className="monitor-panel-heading"><Cctv /> 六路视频监控 · 同源Agent快照</div>
+        <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} agents={agents} regions={regions} />)}</div>
       </div> : null}
 
       <div className="map-pan-layer" style={{ transform: `translate3d(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px), 0) scale(${view.scale})` }}>
@@ -258,11 +249,31 @@ export function StationOverviewMap({
           ))}
             </svg>
 
-            <div className="global-passenger-layer" aria-label={`全站聚合旅客点 ${dots.length} 个`}>
-          {dots.map((dot) => (
-            <i key={dot.id} className={`overview-passenger density-${dot.tone}`} style={{ left: `${dot.x}%`, top: `${dot.y}%`, animationDelay: `${dot.delay}s` }} />
+            <div className="global-passenger-layer" aria-label={`同源Agent聚合点 ${agents.length} 个，每点最多代表50人`}>
+          {agents.map((agent) => (
+            <i key={agent.id} className="overview-passenger" style={{ left: `${agent.x}%`, top: `${agent.y}%`, animationDelay: `${agent.delay}s`, background: densityColor(regions.find((region) => region.id === agent.regionId)?.density ?? 0), boxShadow: `0 0 4px ${densityColor(regions.find((region) => region.id === agent.regionId)?.density ?? 0)}` }} />
           ))}
             </div>
+
+            <div className="floor-total-layer" aria-label="各楼层实时总人数">
+              {floorTotals.map((item) => (
+                <span key={item.floor} className={`floor-total-badge floor-${item.floor.toLowerCase()}`} style={{ left: `${item.x}%`, top: `${item.y}%` }}>
+                  <b>{item.floor} · {item.label}</b>
+                  <strong>{item.count.toLocaleString()}<small>人</small></strong>
+                  <em>本层实时总人数</em>
+                </span>
+              ))}
+            </div>
+
+            {boardingService ? (
+              <div className="platform-service-card" style={{ left: "51%", top: "49%" }} aria-label={`${boardingService.train}次列车站台乘车信息`}>
+                <span>站台乘车联动</span>
+                <div><b>{boardingService.train}</b><strong>开往 {boardingService.destination}</strong></div>
+                <p><i /> 正在检票 · 旅客下站台</p>
+                <dl><div><dt>站台</dt><dd>{boardingService.platform}</dd></div><div><dt>乘车人数</dt><dd>{boardingCount.toLocaleString()}人</dd></div></dl>
+                <small>人数为同源客流模型实时仿真值</small>
+              </div>
+            ) : null}
 
             <div className="all-device-layer" aria-label="全部设备点位">
           {devices.map((device) => (
@@ -287,7 +298,7 @@ export function StationOverviewMap({
             <div className="monitor-point-layer" aria-label="视频监控点位">
           {monitors.map((monitor) => (
             <Tooltip key={monitor.id}>
-              <TooltipTrigger className="monitor-point" style={{ left: `${monitor.x}%`, top: `${monitor.y}%` }} aria-label={`${monitor.id} ${monitor.title}`}>
+              <TooltipTrigger className="monitor-point" style={{ left: `${monitor.x}%`, top: `${monitor.y}%` }} aria-label={`${monitor.id} ${monitor.title}`} onClick={() => setMonitorsOpen(true)}>
                 <Cctv />
               </TooltipTrigger>
               <TooltipContent sideOffset={6}>{monitor.id} · {monitor.title}</TooltipContent>
@@ -299,7 +310,7 @@ export function StationOverviewMap({
       </div>
 
       <div className="map-device-legend">
-        <span><ScanLine />闸机</span><span><Radio />广播</span><span><Monitor />信息屏</span><span><DoorOpen />疏散门</span><span><ArrowRightLeft />指示标识</span><span><Cctv />监控点</span>
+        <span><ScanLine />闸机/系统</span><span><Radio />广播/对讲</span><span><Monitor />信息屏</span><span><DoorOpen />通道</span><span><ArrowRightLeft />标牌/隔离</span><span><BusFront />车辆</span><span><Cctv />监控点</span>
       </div>
       {minute >= 29 && minute < 47 ? <div className="bus-indicator"><BusFront /> 高普联动车辆已就位</div> : null}
     </div>

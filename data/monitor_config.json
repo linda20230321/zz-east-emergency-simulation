@@ -5,12 +5,14 @@
   "displayMode": "floating_draggable_collapsible_window",
   "canvasInteraction": "drag_pan_with_zoom_controls_no_scrollbar",
   "timebase": "simulation_clock",
+  "sharedStateSource": "lib/agent-density.ts#createAgentSnapshot",
+  "consistencyRule": "监控采样点、主图人员点与区域人数必须读取同一仿真快照",
   "monitors": [
-    { "id": "CAM-01", "name": "西南/西北进站口", "x": 18, "y": 25, "startMinute": 5 },
-    { "id": "CAM-02", "name": "正南进站口", "x": 49, "y": 30, "startMinute": 5 },
-    { "id": "CAM-03", "name": "2/3站台换乘直梯", "x": 50, "y": 49, "startMinute": 5 },
-    { "id": "CAM-04", "name": "2B/3B检票口", "x": 34, "y": 22, "startMinute": 5 },
-    { "id": "CAM-05", "name": "西南落客平台大巴", "x": 31, "y": 80, "startMinute": 29 },
-    { "id": "CAM-06", "name": "应急通信车", "x": 22, "y": 31, "startMinute": 5 }
+    { "id": "CAM-01", "name": "西南/西北进站口", "x": 18, "y": 25, "startMinute": 5, "regionIds": ["perimeter"], "scriptScene": "西南、西北进站通道关闭，两小时外旅客下行至一层西广场" },
+    { "id": "CAM-02", "name": "正南进站口", "x": 49, "y": 30, "startMinute": 5, "regionIds": ["gates"], "scriptScene": "实名制核验闸机限制两小时以外旅客进站" },
+    { "id": "CAM-03", "name": "2/3站台换乘直梯", "x": 50, "y": 49, "startMinute": 5, "regionIds": ["platform"], "scriptScene": "换乘直梯关闭，旅客转走指定扶梯/出站流线" },
+    { "id": "CAM-04", "name": "2B/3B检票口", "x": 34, "y": 22, "startMinute": 5, "regionIds": ["gates", "hall"], "scriptScene": "1—2小时与2小时以上旅客分区组织" },
+    { "id": "CAM-05", "name": "西南落客平台大巴", "x": 31, "y": 80, "startMinute": 5, "regionIds": ["plaza"], "scriptScene": "1辆大巴车到达西南落客平台，高普联动准备/09:29开始接驳" },
+    { "id": "CAM-06", "name": "西南落客平台应急通信车", "x": 22, "y": 81, "startMinute": 5, "regionIds": ["plaza"], "scriptScene": "1辆应急通信车到达西南落客平台并开展通信保障" }
   ]
 }

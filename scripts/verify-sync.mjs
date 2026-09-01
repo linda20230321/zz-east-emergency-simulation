@@ -9,6 +9,8 @@ const baselineVersion = (await readFile(path.join(root, "VERSION"), "utf8")).tri
 const timeline = await readJson("data/script_timeline.json")
 const initial = await readJson("data/initial_conditions.json")
 const devices = await readJson("data/device_config.json")
+const density = await readJson("data/density_config.json")
+const monitors = await readJson("data/monitor_config.json")
 
 assert.equal(packageJson.version, baselineVersion, "package.json 与 VERSION 不一致")
 assert.equal(timeline.schemaVersion, "1.0.0")
@@ -20,7 +22,11 @@ assert.ok(timeline.events.every((event, index, list) => index === 0 || event.min
 const distributionTotal = Object.values(initial.passengers.initialDistribution).reduce((sum, value) => sum + value, 0)
 assert.equal(distributionTotal, initial.passengers.total, "初始区域人数之和必须等于总人数")
 assert.equal(new Set(initial.trains.stoppedTrainNumbers).size, initial.trains.stoppedCount, "停运车次数量不一致")
-assert.equal(devices.signIds.length, devices.deviceClassCounts.sign, "疏散标识数量不一致")
+assert.equal(devices.schemaVersion, "2.0.0", "设备配置必须使用脚本映射2.0结构")
+assert.equal(Object.values(devices.deviceClassCounts).reduce((sum, value) => sum + value, 0), devices.physicalAssetCount, "脚本设备物资总量不一致")
+assert.deepEqual(density.colors.map((item) => item.hex), ["#4CAF50", "#FFEB3B", "#FF9800", "#F44336"], "KDE四色阈值未同步")
+assert.equal(monitors.sharedStateSource, "lib/agent-density.ts#createAgentSnapshot", "监控未绑定统一Agent快照")
+assert.ok(monitors.monitors.every((monitor) => Array.isArray(monitor.regionIds) && monitor.regionIds.length > 0), "监控缺少区域绑定")
 
 const docFiles = (await readdir(path.join(root, "docs"))).filter((file) => file.endsWith(".md") && /^0\d_/.test(file))
 assert.ok(docFiles.length >= 7, "核心技术文档不完整")

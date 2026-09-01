@@ -1,34 +1,35 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
+  "scenarioId": "ZZE-FLOOD-2023-0423",
+  "source": "因水害影响北京方向列车大面积晚点旅客滞留疏散应急演练脚本4.23",
   "mapCoordinateSystem": "overall_layout_normalized_percent",
   "baseMap": "public/assets/zhengzhou-east-layout.png",
-  "totalDevices": 39,
-  "deviceClassCounts": { "gate": 4, "broadcast": 6, "display": 5, "door": 4, "sign": 20 },
-  "devices": [
-    { "id": "GATE_SW", "type": "gate", "name": "西南进站口闸机", "floor": 3 },
-    { "id": "GATE_NW", "type": "gate", "name": "西北进站口闸机", "floor": 3 },
-    { "id": "GATE_S", "type": "gate", "name": "正南进站口闸机", "floor": 3 },
-    { "id": "GATE_N", "type": "gate", "name": "正北进站口闸机", "floor": 3 },
-    { "id": "BC_32B", "type": "broadcast", "name": "32B检票口广播", "floor": 3 },
-    { "id": "BC_SERVICE", "type": "broadcast", "name": "服务台广播", "floor": 3 },
-    { "id": "BC_GATE_S", "type": "broadcast", "name": "正南进站口喇叭", "floor": 3 },
-    { "id": "BC_GATE_SW", "type": "broadcast", "name": "西南进站口喇叭", "floor": 3 },
-    { "id": "BC_B8B9", "type": "broadcast", "name": "B8-B9后方广播", "floor": 3 },
-    { "id": "BC_WEST", "type": "broadcast", "name": "一层西广场广播", "floor": 1 },
-    { "id": "DSP_S", "type": "display", "name": "正南进站大屏", "floor": 3 },
-    { "id": "DSP_N", "type": "display", "name": "正北进站大屏", "floor": 3 },
-    { "id": "DSP_SERVICE", "type": "display", "name": "服务台信息屏", "floor": 3 },
-    { "id": "DSP_TICKET", "type": "display", "name": "第八售票处大屏", "floor": 3 },
-    { "id": "DSP_WEST", "type": "display", "name": "西广场引导屏", "floor": 1 },
-    { "id": "DOOR_ELEVATOR", "type": "door", "name": "2/3站台换乘直梯", "floor": 2 },
-    { "id": "DOOR_WEST_PASS", "type": "door", "name": "西广场疏散通道", "floor": 1 },
-    { "id": "DOOR_GREEN_L", "type": "door", "name": "左侧绿色通道", "floor": 1 },
-    { "id": "DOOR_GREEN_R", "type": "door", "name": "右侧绿色通道", "floor": 1 }
+  "runtimeSource": "lib/simulation.ts#getDevices",
+  "deviceGroupCount": 43,
+  "physicalAssetCount": 462,
+  "deviceClassCounts": {
+    "gate": 4,
+    "broadcast": 6,
+    "display": 5,
+    "door": 4,
+    "sign": 151,
+    "window": 2,
+    "barrier": 240,
+    "radio": 16,
+    "vehicle": 2,
+    "medical": 2,
+    "system": 2,
+    "support": 22,
+    "monitor": 6
+  },
+  "quantityEvidence": [
+    { "type": "broadcast", "quantity": 6, "basis": "32B小区广播1、服务台大音响1、演练便携喇叭4" },
+    { "type": "display", "quantity": 5, "basis": "正南/正北/服务台/第八售票处/一层西广场各1" },
+    { "type": "sign", "quantity": 151, "basis": "西广场引导牌48、临时/集结/限流/退改签牌7、区域图4、区域导向牌30、绿色通道牌2、手举车次牌60" },
+    { "type": "barrier", "quantity": 240, "basis": "B8/B9 20、B4/B5 20、一层西广场200" },
+    { "type": "radio", "quantity": 16, "basis": "启动响应9部、现场岗位7部" },
+    { "type": "support", "quantity": 22, "basis": "桌子6、桌签11、展板5" },
+    { "type": "monitor", "quantity": 6, "basis": "脚本固定监控画面1—6" }
   ],
-  "signIds": [
-    "SIGN_3F_HALL_N", "SIGN_3F_HALL_S", "SIGN_3F_HALL_W1", "SIGN_3F_HALL_W2", "SIGN_3F_GATE_B4",
-    "SIGN_3F_GATE_B5", "SIGN_3F_GATE_B8", "SIGN_3F_GATE_B9", "SIGN_3F_ESCALATOR_S", "SIGN_3F_ESCALATOR_W",
-    "SIGN_2F_PLATFORM_E", "SIGN_2F_PLATFORM_W", "SIGN_2F_ESCALATOR_UP", "SIGN_2F_ESCALATOR_DOWN",
-    "SIGN_1F_WEST_ZONE_A", "SIGN_1F_WEST_ZONE_B", "SIGN_1F_WEST_GREEN_L", "SIGN_1F_WEST_GREEN_R", "SIGN_1F_EXIT_N", "SIGN_1F_EXIT_S"
-  ]
+  "traceability": "每一运行对象包含quantity、location、owner、scriptRef、status和detail字段；当前时间节点的脚本动作会覆盖运行状态和展示文案。"
 }

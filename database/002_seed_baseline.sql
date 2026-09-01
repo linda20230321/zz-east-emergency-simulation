@@ -5,7 +5,7 @@ VALUES (
   'ZZE-FLOOD-2023-0423',
   '因水害影响北京方向列车大面积晚点旅客滞留疏散',
   '因水害影响北京方向列车大面积晚点旅客滞留疏散应急演练脚本4.23.doc',
-  '09:00', '09:47', '0.3.0', 'approved'
+  '09:00', '09:47', '0.7.0', 'approved'
 )
 ON CONFLICT (scenario_code) DO UPDATE SET config_version = EXCLUDED.config_version, updated_at = now();
 

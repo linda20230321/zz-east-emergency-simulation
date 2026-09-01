@@ -188,3 +188,19 @@ ON CONFLICT (version) DO NOTHING;
 INSERT INTO schema_version(version, checksum, description)
 VALUES ('0.3.0', 'PAN-ZOOM-MONITOR-2026-08-29', '扩大裁切底图、无滚动条拖拽缩放与监控面板折叠基线')
 ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.4.0', 'SCRIPT-FULL-MAPPING-2026-09-01', '应急脚本设备、监控、岗位与流程全要素映射基线')
+ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.5.0', 'DYNAMIC-KPI-BOARD-2026-09-01', '客流预判、积压、晚点停运动态数字看板基线')
+ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.6.0', 'KDE-SHARED-AGENT-SNAPSHOT-2026-09-01', 'KDE热力、区域边界和视频监控同源数据基线')
+ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.7.0', 'HD-MAP-DOT-ONLY-BOARDING-2026-09-01', '高清无标题底图、圆点化密度、楼层人数与站台乘车联动交付基线')
+ON CONFLICT (version) DO NOTHING;

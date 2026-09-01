@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.1.0",
+  "method": "gaussian_kde_cpu",
+  "inputSource": "shared_agent_snapshot",
+  "agentSnapshotFactory": "lib/agent-density.ts#createAgentSnapshot",
+  "representativeWeightMaximum": 50,
+  "normalizationRange": [0, 1],
+  "sampleStepPercent": { "x": 2.2, "y": 1.8 },
+  "regionalBandwidthPercent": {
+    "hall": 2.7,
+    "perimeter": 2.2,
+    "gates": 2.0,
+    "ticket": 1.7,
+    "platform": 2.8,
+    "plaza": 2.3
+  },
+  "boundaryRule": "rectangular_percentage_display_zones_with_dot_margin",
+  "webPresentation": "colored_agent_dots_only",
+  "webHeatmapOverlayEnabled": false,
+  "colors": [
+    { "minimum": 0, "maximumExclusive": 0.3, "name": "绿色", "hex": "#4CAF50" },
+    { "minimum": 0.3, "maximumExclusive": 0.6, "name": "黄色", "hex": "#FFEB3B" },
+    { "minimum": 0.6, "maximumExclusive": 0.85, "name": "橙色", "hex": "#FF9800" },
+    { "minimum": 0.85, "maximumInclusive": 1, "name": "红色", "hex": "#F44336" }
+  ],
+  "unityRuntime": "unity/Runtime/KdeDensityController.cs",
+  "unityShader": "unity/Shaders/KdeHeatmapOverlay.shader",
+  "consistencyRule": "主图人员圆点、区域统计、CPU KDE计算结果和监控采样必须使用相同snapshotId与simulationTime"
+}
