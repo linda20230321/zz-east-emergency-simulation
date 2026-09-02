@@ -8,9 +8,11 @@ import {
   ChevronRight,
   CircleGauge,
   Clock3,
+  Focus,
   Pause,
   Play,
   RotateCcw,
+  Route,
   ShieldAlert,
   TrainFront,
   TrendingUp,
@@ -125,6 +127,8 @@ export function SimulationDashboard() {
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
   const [selectedDevice, setSelectedDevice] = useState<DeviceState | null>(null)
+  const [stepFocusOpen, setStepFocusOpen] = useState(false)
+  const autoFocusedMinute = useRef<number | null>(null)
 
   useEffect(() => {
     if (!playing) return
@@ -163,6 +167,13 @@ export function SimulationDashboard() {
   const devices = useMemo(() => getDevices(roundedMinute), [roundedMinute])
   const currentEvent = getCurrentEvent(roundedMinute)
   const scriptStep = getScriptRuntimeStep(roundedMinute)
+  const focusEventMinutes = [5, 21, 23, 29, 32, 35]
+  useEffect(() => {
+    if (!playing || !focusEventMinutes.includes(currentEvent.minute) || autoFocusedMinute.current === currentEvent.minute) return
+    autoFocusedMinute.current = currentEvent.minute
+    setPlaying(false)
+    setStepFocusOpen(true)
+  }, [currentEvent.minute, playing])
   const hall = regions.find((region) => region.id === "hall")!
   const plaza = regions.find((region) => region.id === "plaza")!
   const activeDeviceCount = devices.filter((device) => device.tone !== "normal" && device.tone !== "offline").reduce((sum, device) => sum + device.quantity, 0)
@@ -210,7 +221,7 @@ export function SimulationDashboard() {
           <aside className="event-panel">
             <div className="panel-heading"><div><span>EVENT TIMELINE</span><h2>应急事件链</h2></div><Badge variant="outline">15节点</Badge></div>
             <div className="event-list">
-              {events.map((event) => <button key={`${event.time}-${event.title}`} className={`event-row ${event.minute === currentEvent.minute ? "is-active" : ""} ${event.minute <= minute ? "is-passed" : ""}`} onClick={() => setMinute(event.minute)}><span className={`event-node severity-${event.severity}`} /><time>{event.time}</time><div><b>{event.title}</b><small>{event.location}</small></div><ChevronRight /></button>)}
+              {events.map((event) => <button key={`${event.time}-${event.title}`} className={`event-row ${event.minute === currentEvent.minute ? "is-active" : ""} ${event.minute <= minute ? "is-passed" : ""}`} onClick={() => { setMinute(event.minute); setPlaying(false); setStepFocusOpen(true) }}><span className={`event-node severity-${event.severity}`} /><time>{event.time}</time><div><b>{event.title}</b><small>{event.location}</small></div><ChevronRight /></button>)}
             </div>
           </aside>
           <section className="map-panel">
@@ -228,6 +239,7 @@ export function SimulationDashboard() {
               <h2>{currentEvent.title}</h2>
               <span>{scriptStep.process}</span>
               <div className="action-box"><CircleGauge /><p><b>系统动作</b>{currentEvent.action}</p></div>
+              <button type="button" className="open-step-focus" onClick={() => { setPlaying(false); setStepFocusOpen(true) }}><Focus /> 打开步骤聚焦视图</button>
             </div>
             <div className="device-summary">
               <div className="panel-heading compact"><div><span>DEVICE MATRIX</span><h2>设备总量及实时状态</h2></div><Badge variant="outline">总计 {totalDeviceCount}</Badge></div>
@@ -247,20 +259,24 @@ export function SimulationDashboard() {
                 )
               })}
             </div>
-            <div className="procedure-trace">
-              <div className="panel-heading compact"><div><span>SCRIPT TRACE</span><h2>步骤、岗位与指令映射</h2></div><Badge variant="outline">{scriptStep.time}</Badge></div>
-              <div className="trace-process"><b>{scriptStep.title}</b><span>{scriptStep.location}</span><p>{scriptStep.process}</p></div>
-              <div className="trace-list">
-                {scriptStep.roles.map((role) => <div className="trace-row" key={`${role.person}-${role.post}`}><b>{role.person} · {role.post}</b><span>{role.group}｜{role.duty}</span></div>)}
-                {scriptStep.actions.map((action) => <div className="trace-row trace-action" key={`${action.device}-${action.operation}`}><b>{action.device} → {action.operation}</b><span>责任：{action.owner}{action.content ? `｜${action.content}` : ""}</span></div>)}
+            <details className="secondary-info-section">
+              <summary><span>步骤、岗位与指令</span><small>{scriptStep.roles.length + scriptStep.actions.length}项 · 点击展开</small></summary>
+              <div className="procedure-trace">
+                <div className="trace-process"><b>{scriptStep.title}</b><span>{scriptStep.location}</span><p>{scriptStep.process}</p></div>
+                <div className="trace-list">
+                  {scriptStep.roles.map((role) => <div className="trace-row" key={`${role.person}-${role.post}`}><b>{role.person} · {role.post}</b><span>{role.group}｜{role.duty}</span></div>)}
+                  {scriptStep.actions.map((action) => <div className="trace-row trace-action" key={`${action.device}-${action.operation}`}><b>{action.device} → {action.operation}</b><span>责任：{action.owner}{action.content ? `｜${action.content}` : ""}</span></div>)}
+                </div>
               </div>
-            </div>
-            <div className="device-live-feed">
-              <div className="panel-heading compact"><div><span>LIVE DEVICE ACTIONS</span><h2>设备实时动作</h2></div><Badge variant="outline">{formatSimulationTime(minute)}</Badge></div>
-              <div className="device-live-list">
-                {devices.filter((device) => device.tone !== "normal").slice(0, 10).map((device) => <button key={device.id} type="button" className="device-live-row" onClick={() => setSelectedDevice(device)}><span className={`status-dot status-${device.tone}`} /><div><b>{device.name}</b><small>{device.floor} · {device.status} · {device.detail}</small></div></button>)}
+            </details>
+            <details className="secondary-info-section">
+              <summary><span>设备实时动作</span><small>{devices.filter((device) => device.tone !== "normal").length}项 · 点击展开</small></summary>
+              <div className="device-live-feed">
+                <div className="device-live-list">
+                  {devices.filter((device) => device.tone !== "normal").slice(0, 10).map((device) => <button key={device.id} type="button" className="device-live-row" onClick={() => setSelectedDevice(device)}><span className={`status-dot status-${device.tone}`} /><div><b>{device.name}</b><small>{device.floor} · {device.status} · {device.detail}</small></div></button>)}
+                </div>
               </div>
-            </div>
+            </details>
             <div className="data-note">
               <b>数据口径</b>
               <p>设备数量、位置、状态、责任岗位、广播/屏显文案及6路监控均依据4.23演练脚本逐项映射；同一物资组以“点位+数量”方式呈现。</p>
@@ -291,6 +307,44 @@ export function SimulationDashboard() {
           <div className="progress-readout"><span>流程进度</span><b>{Math.round(progress)}%</b></div>
         </section>
       </main>
+
+      <Dialog open={stepFocusOpen} onOpenChange={setStepFocusOpen}>
+        <DialogContent className="step-focus-dialog">
+          <DialogHeader>
+            <DialogDescription>{scriptStep.time} · {scriptStep.location} · 步骤聚焦</DialogDescription>
+            <DialogTitle>{scriptStep.title}</DialogTitle>
+          </DialogHeader>
+          <div className="step-focus-layout">
+            <section className="step-focus-map" aria-label="当前步骤平面图">
+              <StationOverviewMap minute={minute} regions={regions} devices={devices.filter((device) => device.tone !== "normal")} onDeviceSelect={setSelectedDevice} />
+            </section>
+            <aside className="step-focus-summary">
+              <div className="focus-flow-state">
+                <Route />
+                <div><span>当前人员流向</span><b>{minute >= 35 && minute < 47 ? "西广场 → 候车室（回流）" : minute >= 21 && minute < 35 ? "候车室 → 西广场（疏散）" : "常态组织 / 路径待命"}</b></div>
+              </div>
+              <div className="focus-kpi-grid">
+                <div><span>候车室</span><b>{hall.count.toLocaleString()}人</b></div>
+                <div><span>西广场</span><b>{plaza.count.toLocaleString()}人</b></div>
+                <div><span>关联设备</span><b>{devices.filter((device) => device.tone !== "normal").length}个</b></div>
+              </div>
+              <div className="focus-process"><span>本步处置</span><p>{scriptStep.process}</p></div>
+              <div className="focus-action-list">
+                <span>设备与执行指令</span>
+                {scriptStep.actions.length ? scriptStep.actions.map((action) => (
+                  <button type="button" key={`${action.device}-${action.operation}`} onClick={() => {
+                    const target = devices.find((device) => device.name.includes(action.device) || action.device.includes(device.name))
+                    if (target) setSelectedDevice(target)
+                  }}>
+                    <b>{action.device}</b><em>{action.operation}</em><small>{action.owner}</small>
+                  </button>
+                )) : <p>本步骤无新增设备指令，保持当前联动状态。</p>}
+              </div>
+              <div className="focus-role-list"><span>关键岗位</span>{scriptStep.roles.slice(0, 4).map((role) => <p key={`${role.person}-${role.post}`}><b>{role.person} · {role.post}</b><small>{role.duty}</small></p>)}</div>
+            </aside>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(selectedDevice)} onOpenChange={(open) => !open && setSelectedDevice(null)}>
         <DialogContent className="device-dialog">
