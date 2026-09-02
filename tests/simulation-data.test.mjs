@@ -178,5 +178,5 @@ test("数据库包含回放、指标、审计和追溯表", async () => {
     assert.match(sql, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`))
   }
   assert.match(sql, /VALUES \('0\.8\.0', 'NORTH-UP-DYNAMIC-ASTAR-2026-09-01'/)
-  assert.match(seed, /'09:00', '09:47', '0\.8\.0', 'approved'/)
+  assert.match(seed, /'09:00', '09:47', '0\.8\.1', 'approved'/)
 })

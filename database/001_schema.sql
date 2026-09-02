@@ -208,3 +208,7 @@ ON CONFLICT (version) DO NOTHING;
 INSERT INTO schema_version(version, checksum, description)
 VALUES ('0.8.0', 'NORTH-UP-DYNAMIC-ASTAR-2026-09-01', '北向校正、四向出口、精简设备、动态A星路线及监控同源交付基线')
 ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO schema_version(version, checksum, description)
+VALUES ('0.8.1', 'FOCUS-MAP-FULL-WIDTH-2026-09-02', '步骤聚焦、底图独立缩放与全宽适配、气泡边界交互优化交付基线')
+ON CONFLICT (version) DO NOTHING;

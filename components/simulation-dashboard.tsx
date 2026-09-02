@@ -223,7 +223,7 @@ export function SimulationDashboard() {
           </div>
           <div className="system-status">
             <span className="pulse-dot" />
-            <div><b>系统在线</b><small>动态路径交付版 v0.8.0</small></div>
+            <div><b>系统在线</b><small>动态路径交付版 v0.8.1</small></div>
           </div>
         </header>
 
