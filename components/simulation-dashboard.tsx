@@ -12,14 +12,13 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Route,
   ShieldAlert,
   TrainFront,
   TrendingUp,
   Users,
 } from "lucide-react"
 
-import { StationOverviewMap } from "@/components/station-overview-map"
+import { DynamicRouteRecommendation, StationOverviewMap } from "@/components/station-overview-map"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -203,6 +202,13 @@ export function SimulationDashboard() {
   const plazaSeries = useMemo(() => buildSeries(roundedMinute, (sampleMinute) => getRegionCount(sampleMinute, "plaza")), [roundedMinute])
   const forecastSeries = useMemo(() => Array.from({ length: 12 }, (_, index) => getStationBacklog(Math.min(SIMULATION_DURATION, roundedMinute + index))), [roundedMinute])
   const progress = (minute / SIMULATION_DURATION) * 100
+  const handleStepFocusOpenChange = (open: boolean) => {
+    setStepFocusOpen(open)
+    if (!open) {
+      autoFocusedMinute.current = currentEvent.minute
+      if (minute < SIMULATION_DURATION) setPlaying(true)
+    }
+  }
 
   return (
     <TooltipProvider>
@@ -323,7 +329,7 @@ export function SimulationDashboard() {
         </section>
       </main>
 
-      <Dialog open={stepFocusOpen} onOpenChange={setStepFocusOpen}>
+      <Dialog open={stepFocusOpen} onOpenChange={handleStepFocusOpenChange}>
         <DialogContent className="step-focus-dialog">
           <DialogHeader>
             <DialogDescription>{scriptStep.time} · {scriptStep.location} · 步骤聚焦</DialogDescription>
@@ -334,10 +340,7 @@ export function SimulationDashboard() {
               <StationOverviewMap minute={minute} regions={regions} devices={focusDevices} onDeviceSelect={setSelectedDevice} />
             </section>
             <aside className="step-focus-summary">
-              <div className="focus-flow-state">
-                <Route />
-                <div><span>当前人员流向</span><b>{minute >= 35 && minute < 47 ? "西广场 → 候车室（回流）" : minute >= 21 && minute < 35 ? "候车室 → 西广场（疏散）" : "常态组织 / 路径待命"}</b></div>
-              </div>
+              <DynamicRouteRecommendation minute={roundedMinute} regions={regions} />
               <div className="focus-kpi-grid">
                 <div><span>候车室</span><b>{hall.count.toLocaleString()}人</b></div>
                 <div><span>西广场</span><b>{plaza.count.toLocaleString()}人</b></div>

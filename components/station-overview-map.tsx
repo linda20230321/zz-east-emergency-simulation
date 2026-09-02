@@ -55,6 +55,34 @@ const boardingServices = [
   { train: "G51", start: 44, end: 47, platform: "综控未指定", destination: "重庆北", simulatedCapacity: 650 },
 ] as const
 
+const returnRouteColors = ["#00cc66", "#2ea043", "#00e676", "#4caf50"]
+
+function getFlowMode(minute: number) {
+  return minute >= 21 && minute < 35 ? "evacuation" : minute >= 35 && minute < 47 ? "return" : "standby"
+}
+
+export function DynamicRouteRecommendation({ minute, regions }: { minute: number; regions: RegionState[] }) {
+  const dynamicRoutes = useMemo(() => computeDynamicRoutes(regions, minute), [regions, minute])
+  const flowMode = getFlowMode(minute)
+
+  return (
+    <section className={`route-recommendation-panel flow-mode-${flowMode}`} aria-label="动态疏散与回流路径" data-route-engine="improved-a-star-manhattan-density">
+      <header><div><Route /><span>{flowMode === "return" ? "回流路径" : "疏散路径推荐"}</span></div><b>{flowMode === "standby" ? "预计算待命" : "持续重算"}</b></header>
+      <p>{flowMode === "return" ? "西广场 → 候车室 · 绿色回流箭头" : "候车室 → 西广场 · 改进型 A* 实时推荐"}</p>
+      <div className="route-card-grid">
+        {[...dynamicRoutes].sort((a, b) => a.score - b.score).map((route) => (
+          <article key={route.id} className={route.recommended ? "is-recommended" : ""} style={{ "--route-color": flowMode === "return" ? returnRouteColors[dynamicRoutes.indexOf(route)] : route.color } as React.CSSProperties}>
+            <span>{route.exit}{flowMode === "return" ? "回流线" : "疏散线"}{route.recommended ? <em>推荐</em> : null}</span>
+            <strong>{route.distanceMeters}m · {route.estimatedMinutes}min</strong>
+            <small>密度 {Math.round(route.density * 100)}% · 综合代价 {Math.round(route.score)}</small>
+          </article>
+        ))}
+      </div>
+      <footer>{flowMode === "return" ? "箭头由西广场指向候车室" : "箭头由候车室指向西广场"} · 最近重算 {formatSimulationTime(minute)}</footer>
+    </section>
+  )
+}
+
 function DeviceGlyph({ type }: { type: DeviceState["type"] }) {
   if (type === "broadcast") return <Radio />
   if (type === "display") return <Monitor />
@@ -250,12 +278,11 @@ export function StationOverviewMap({
   const boardingCount = boardingService
     ? Math.max(1, Math.min(boardingService.simulatedCapacity, Math.round(((minute - boardingService.start) / (boardingService.end - boardingService.start)) * boardingService.simulatedCapacity)))
     : 0
-  const flowMode = minute >= 21 && minute < 35 ? "evacuation" : minute >= 35 && minute < 47 ? "return" : "standby"
-  const returnColors = ["#37e0a1", "#65efbd", "#29c98a", "#8cf6d0"]
+  const flowMode = getFlowMode(minute)
   const activeRoutes = flowMode === "standby" ? [] : dynamicRoutes.map((route, index) => ({
     ...route,
     renderId: `${flowMode}-${route.id}`,
-    renderColor: flowMode === "return" ? returnColors[index] : route.color,
+    renderColor: flowMode === "return" ? returnRouteColors[index] : route.color,
     flowType: flowMode,
     points: flowMode === "return" ? [...route.points].reverse() : route.points,
   }))
@@ -270,7 +297,7 @@ export function StationOverviewMap({
     utterance.rate = 0.95
     window.speechSynthesis.speak(utterance)
   }
-  const [view, setView] = useState({ x: 0, y: 0, scale: 1 })
+  const [view, setView] = useState({ x: 0, y: 0, scale: 1.1 })
   const [isPanning, setIsPanning] = useState(false)
   const [monitorsOpen, setMonitorsOpen] = useState(false)
   const panOrigin = useRef<{ pointerX: number; pointerY: number; x: number; y: number } | null>(null)
@@ -279,7 +306,7 @@ export function StationOverviewMap({
     setView((current) => ({ ...current, scale: Math.min(1.45, Math.max(0.56, Number((current.scale + delta).toFixed(2)))) }))
   }
 
-  const resetView = () => setView({ x: 0, y: 0, scale: 1 })
+  const resetView = () => setView({ x: 0, y: 0, scale: 1.1 })
 
   return (
     <div
@@ -338,27 +365,11 @@ export function StationOverviewMap({
         <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} agents={agents} regions={regions} recommendedRoute={recommendedRoute} />)}</div>
       </div> : null}
 
-      <section className={`route-recommendation-panel flow-mode-${flowMode}`} aria-label="动态疏散与回流路径" data-route-engine="improved-a-star-manhattan-density">
-        <header><div><Route /><span>{flowMode === "return" ? "回流路径" : "疏散路径推荐"}</span></div><b>{flowMode === "standby" ? "预计算待命" : "持续重算"}</b></header>
-        <p>{flowMode === "return" ? "西广场 → 候车室 · 绿色回流箭头" : "候车室 → 西广场 · 改进型 A* 实时推荐"}</p>
-        <div className="route-card-grid">
-          {[...dynamicRoutes].sort((a, b) => a.score - b.score).map((route) => (
-            <article key={route.id} className={route.recommended ? "is-recommended" : ""} style={{ "--route-color": flowMode === "return" ? returnColors[dynamicRoutes.indexOf(route)] : route.color } as React.CSSProperties}>
-              <span>{route.exit}{flowMode === "return" ? "回流线" : "疏散线"}{route.recommended ? <em>推荐</em> : null}</span>
-              <strong>{route.distanceMeters}m · {route.estimatedMinutes}min</strong>
-              <small>密度 {Math.round(route.density * 100)}% · 代价 {Math.round(route.score)}</small>
-            </article>
-          ))}
-        </div>
-        <footer>{flowMode === "return" ? "箭头由西广场指向候车室" : "箭头由候车室指向西广场"} · 最近重算 {formatSimulationTime(minute)}</footer>
-      </section>
-
       <div className="map-pan-layer" style={{ transform: `translate3d(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px), 0) scale(${view.scale})` }}>
         <div className="map-crop-window">
           <div className="map-image-shell">
             <img src="/assets/zhengzhou-east-layout.png" alt="按深色演练界面风格重绘的郑州东站三层总体布局图，依次展示3F候车层、2F站台层和1F出站层" />
             <div className="map-dim-overlay" />
-            <div className="orientation-correction-mask" aria-hidden="true" />
             <div className="map-compass" aria-label="底图方向：上北、下南、左西、右东"><Compass /><b>北</b><span className="east">东</span><span className="south">南</span><span className="west">西</span></div>
             <div className="station-exit-layer" aria-label="正南、正北、西南、西北四个进站口">
               {stationExits.map((exit) => <span key={exit.id} className={`station-exit station-exit-${exit.id.toLowerCase()}`} style={{ left: `${exit.x}%`, top: `${exit.y}%` }}><i>{exit.direction}</i>{exit.label}</span>)}

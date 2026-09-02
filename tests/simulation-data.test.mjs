@@ -63,7 +63,7 @@ test("三层使用同一总体布局底图且无楼层标签切换", async () =>
   assert.equal(baseMap.readUInt32BE(16), 1842)
   assert.equal(baseMap.readUInt32BE(20), 3414)
   for (const token of ["floor-total-layer", "各楼层实时总人数", "boardingServices", "站台乘车联动", "乘车人数", "2道", "综控未指定"]) assert.match(overview, new RegExp(token))
-  for (const token of ["map-compass", "正南出口", "正北出口", "西南出口", "西北出口", "上北、下南、左西、右东"]) assert.match(overview, new RegExp(token))
+  for (const token of ["map-compass", "正南进站口", "正北进站口", "西南进站口", "西北进站口", "上北、下南、左西、右东"]) assert.match(overview, new RegExp(token))
 })
 
 test("总图支持无滚动条拖拽缩放且监控面板可折叠", async () => {
@@ -79,6 +79,20 @@ test("总图支持无滚动条拖拽缩放且监控面板可折叠", async () =>
   assert.match(css, /\.overview-map-stage[^}]*overflow: hidden/)
   assert.match(css, /\.map-pan-layer[^}]*width: min\(1040px/)
   assert.match(css, /\.map-pan-layer[^}]*height: min\(95%/)
+})
+
+test("底图默认110%且路径推荐仅在步骤聚焦大图的独立侧栏展示", async () => {
+  const dashboard = await readFile(new URL("../components/simulation-dashboard.tsx", import.meta.url), "utf8")
+  const overview = await readFile(new URL("../components/station-overview-map.tsx", import.meta.url), "utf8")
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8")
+  assert.match(overview, /scale: 1\.1/)
+  assert.match(overview, /export function DynamicRouteRecommendation/)
+  assert.doesNotMatch(overview, /orientation-correction-mask/)
+  assert.match(dashboard, /<aside className="step-focus-summary">\s*<DynamicRouteRecommendation/)
+  assert.match(dashboard, /autoFocusedMinute\.current = currentEvent\.minute/)
+  assert.match(dashboard, /if \(minute < SIMULATION_DURATION\) setPlaying\(true\)/)
+  assert.match(css, /\.route-recommendation-panel \{ position: relative;/)
+  assert.doesNotMatch(css, /\.orientation-correction-mask/)
 })
 
 test("核心态势数字看板支持预判、变化量和动态趋势", async () => {
