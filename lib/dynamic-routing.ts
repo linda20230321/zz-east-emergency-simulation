@@ -27,9 +27,9 @@ export type DynamicRoute = {
 
 const routeMeta: Array<{ id: string; name: string; exit: ExitDirection; via: string; color: string }> = [
   { id: "EVAC_SW", name: "西南通道疏散线", exit: "西南", via: "EXIT_SW", color: "#39d9ff" },
-  { id: "EVAC_S", name: "正南通道疏散线", exit: "正南", via: "EXIT_S", color: "#45e0a8" },
-  { id: "EVAC_N", name: "正北通道疏散线", exit: "正北", via: "EXIT_N", color: "#ffbd55" },
-  { id: "EVAC_NW", name: "西北通道疏散线", exit: "西北", via: "EXIT_NW", color: "#b58cff" },
+  { id: "EVAC_S", name: "正南通道疏散线", exit: "正南", via: "EXIT_S", color: "#70b8ff" },
+  { id: "EVAC_N", name: "正北通道疏散线", exit: "正北", via: "EXIT_N", color: "#43e4ff" },
+  { id: "EVAC_NW", name: "西北通道疏散线", exit: "西北", via: "EXIT_NW", color: "#8fa8ff" },
 ]
 
 const nodes: GraphNode[] = [
