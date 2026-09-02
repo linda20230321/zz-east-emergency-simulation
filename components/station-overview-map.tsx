@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useLayoutEffect, useMemo, useRef, useState } from "react"
 import {
   Cctv,
   Compass,
@@ -39,8 +39,8 @@ const monitors = [
 const stationExits = [
   { id: "EXIT_N", label: "正北进站口", direction: "北", x: 52, y: 14 },
   { id: "EXIT_S", label: "正南进站口", direction: "南", x: 52, y: 30.5 },
-  { id: "EXIT_SW", label: "西南出口", direction: "西南", x: 20, y: 29 },
-  { id: "EXIT_NW", label: "西北出口", direction: "西北", x: 19, y: 18 },
+  { id: "EXIT_SW", label: "西南进站口", direction: "西南", x: 20, y: 29 },
+  { id: "EXIT_NW", label: "西北进站口", direction: "西北", x: 19, y: 18 },
 ] as const
 
 const floorLabelPositions = [
@@ -135,6 +135,7 @@ function DraggableDeviceCallout({
   onSpeak: () => void
 }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const calloutRef = useRef<HTMLDivElement | null>(null)
   const dragOrigin = useRef<{
     pointerX: number
     pointerY: number
@@ -148,8 +149,36 @@ function DraggableDeviceCallout({
   const anchorX = Math.max(14, Math.min(86, device.x))
   const anchorY = Math.max(7, Math.min(94, device.y))
 
+  useLayoutEffect(() => {
+    const callout = calloutRef.current
+    const layer = callout?.parentElement
+    if (!callout || !layer) return
+
+    const containCallout = () => {
+      const rect = callout.getBoundingClientRect()
+      const bounds = layer.getBoundingClientRect()
+      let dx = 0
+      let dy = 0
+      if (rect.left < bounds.left + 4) dx = bounds.left + 4 - rect.left
+      if (rect.right > bounds.right - 4) dx = bounds.right - 4 - rect.right
+      if (rect.top < bounds.top + 4) dy = bounds.top + 4 - rect.top
+      if (rect.bottom > bounds.bottom - 4) dy = bounds.bottom - 4 - rect.bottom
+      if (dx || dy) setOffset((current) => ({ x: current.x + dx, y: current.y + dy }))
+    }
+
+    containCallout()
+    const observer = new ResizeObserver(containCallout)
+    observer.observe(layer)
+    window.addEventListener("resize", containCallout)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener("resize", containCallout)
+    }
+  }, [device.id, device.status])
+
   return (
     <div
+      ref={calloutRef}
       className={`device-callout callout-${device.type}`}
       style={{ left: `${anchorX}%`, top: `${anchorY}%`, transform: `translate(-50%, -108%) translate3d(${offset.x}px, ${offset.y}px, 0)` }}
     >
@@ -329,7 +358,6 @@ export function StationOverviewMap({
           <div className="map-image-shell">
             <img src="/assets/zhengzhou-east-layout.png" alt="按深色演练界面风格重绘的郑州东站三层总体布局图，依次展示3F候车层、2F站台层和1F出站层" />
             <div className="map-dim-overlay" />
-            <div className="map-title-removal-mask" aria-hidden="true" />
             <div className="orientation-correction-mask" aria-hidden="true" />
             <div className="map-compass" aria-label="底图方向：上北、下南、左西、右东"><Compass /><b>北</b><span className="east">东</span><span className="south">南</span><span className="west">西</span></div>
             <div className="station-exit-layer" aria-label="正南、正北、西南、西北四个进站口">
@@ -347,7 +375,7 @@ export function StationOverviewMap({
           </defs>
           {activeRoutes.map((route) => (
             <g key={route.renderId} className={`animated-route flow-${route.flowType} ${route.recommended ? "is-recommended" : ""}`}>
-              <path d={routePointsToSvg(route.points)} stroke={route.renderColor} markerEnd={`url(#arrow-${route.renderId})`} />
+              <path d={routePointsToSvg(route.points)} stroke={route.renderColor} markerMid={`url(#arrow-${route.renderId})`} markerEnd={`url(#arrow-${route.renderId})`} />
               <path className="route-glow" d={routePointsToSvg(route.points)} stroke={route.renderColor} />
             </g>
           ))}
