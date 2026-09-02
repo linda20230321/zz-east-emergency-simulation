@@ -386,17 +386,6 @@ button { font: inherit; }
 
 
 /* Step-focused simulation clarity pass */
-.map-title-removal-mask {
-  position: absolute;
-  z-index: 13;
-  top: .7%;
-  left: 50%;
-  width: 38%;
-  height: 2.3%;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, rgba(5, 20, 28, 0), rgba(5, 20, 28, .98) 12%, rgba(5, 20, 28, .98) 88%, rgba(5, 20, 28, 0));
-  pointer-events: none;
-}
 .flow-direction-banner {
   position: absolute;
   z-index: 19;
