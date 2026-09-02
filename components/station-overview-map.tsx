@@ -365,17 +365,15 @@ export function StationOverviewMap({
         <div className="monitor-panel-grid">{monitors.map((monitor) => <SimulatedMonitor key={monitor.id} monitor={monitor} minute={minute} agents={agents} regions={regions} recommendedRoute={recommendedRoute} />)}</div>
       </div> : null}
 
-      <div className="map-pan-layer" style={{ transform: `translate3d(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px), 0) scale(${view.scale})` }}>
+      <div className="map-pan-layer" style={{ transform: `translate3d(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px), 0)` }}>
         <div className="map-crop-window">
-          <div className="map-image-shell">
+          <div className="map-image-shell" style={{ transform: `scale(${view.scale})` }}>
             <img src="/assets/zhengzhou-east-layout.png" alt="按深色演练界面风格重绘的郑州东站三层总体布局图，依次展示3F候车层、2F站台层和1F出站层" />
             <div className="map-dim-overlay" />
             <div className="map-compass" aria-label="底图方向：上北、下南、左西、右东"><Compass /><b>北</b><span className="east">东</span><span className="south">南</span><span className="west">西</span></div>
             <div className="station-exit-layer" aria-label="正南、正北、西南、西北四个进站口">
               {stationExits.map((exit) => <span key={exit.id} className={`station-exit station-exit-${exit.id.toLowerCase()}`} style={{ left: `${exit.x}%`, top: `${exit.y}%` }}><i>{exit.direction}</i>{exit.label}</span>)}
             </div>
-            {flowMode !== "standby" ? <div className={`flow-direction-banner flow-${flowMode}`}><b>{flowMode === "return" ? "回流线" : "疏散线"}</b><span>{flowMode === "return" ? "西广场 → 候车室" : "候车室 → 西广场"}</span></div> : null}
-
             <svg className="route-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="动态疏散与回流路线">
           <defs>
             {activeRoutes.map((route) => (

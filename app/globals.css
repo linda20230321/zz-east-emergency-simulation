@@ -146,7 +146,8 @@ button { font: inherit; }
 .map-pan-layer { position: absolute; z-index: 3; left: 50%; top: 50%; width: min(1040px, calc(100% - 120px)); height: min(95%, 880px); transform-origin: 50% 50%; transition: transform .14s ease-out; will-change: transform; pointer-events: none; }
 .is-panning .map-pan-layer { transition: none; }
 .map-crop-window { position: relative; width: 100%; height: 100%; overflow: hidden; border: 1px solid #3b5f6e; background: #06121a; box-shadow: 0 28px 65px rgba(0, 0, 0, .55), 0 0 0 6px rgba(19, 56, 67, .35); pointer-events: auto; }
-.map-image-shell { position: relative; z-index: 3; width: 100%; height: 100%; background: #06121a; }
+.map-image-shell { position: relative; z-index: 3; width: 100%; height: 100%; transform-origin: 50% 50%; transition: transform .14s ease-out; will-change: transform; background: #06121a; }
+.is-panning .map-image-shell { transition: none; }
 .map-image-shell > img { display: block; width: 100%; height: 100%; object-fit: fill; image-rendering: auto; filter: brightness(1.08) contrast(1.12) saturate(1.12); transform: translateZ(0); backface-visibility: hidden; }
 .map-dim-overlay { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(4, 19, 26, .04), rgba(2, 12, 17, .12)); pointer-events: none; }
 .route-overlay { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -385,27 +386,6 @@ button { font: inherit; }
 
 
 /* Step-focused simulation clarity pass */
-.flow-direction-banner {
-  position: absolute;
-  z-index: 19;
-  left: 50%;
-  top: 11.8%;
-  min-width: 150px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 4px 8px;
-  border: 1px solid rgba(73, 214, 230, .72);
-  background: rgba(3, 20, 27, .94);
-  box-shadow: 0 0 16px rgba(55, 213, 231, .22);
-  pointer-events: none;
-}
-.flow-direction-banner b { font-size: 7px; color: #05151b; background: #50ddea; padding: 2px 5px; }
-.flow-direction-banner span { color: #dffbff; font-size: 7px; font-weight: 800; letter-spacing: .04em; }
-.flow-direction-banner.flow-return { border-color: rgba(60, 229, 161, .82); box-shadow: 0 0 16px rgba(55, 224, 161, .26); }
-.flow-direction-banner.flow-return b { background: #42dfa0; }
 .animated-route.flow-evacuation path:not(.route-glow) { stroke-dasharray: 3.6 1.5; }
 .animated-route.flow-return path:not(.route-glow) { stroke-dasharray: 1.4 1.2; animation-direction: reverse; }
 .route-recommendation-panel.flow-mode-return { border-color: rgba(59, 205, 145, .86); }
