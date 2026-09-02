@@ -27,18 +27,18 @@ export type DynamicRoute = {
 
 const routeMeta: Array<{ id: string; name: string; exit: ExitDirection; via: string; color: string }> = [
   { id: "EVAC_SW", name: "西南通道疏散线", exit: "西南", via: "EXIT_SW", color: "#39d9ff" },
-  { id: "EVAC_S", name: "正南通道疏散线", exit: "正南", via: "EXIT_S", color: "#45e0a8" },
-  { id: "EVAC_N", name: "正北通道疏散线", exit: "正北", via: "EXIT_N", color: "#ffbd55" },
-  { id: "EVAC_NW", name: "西北通道疏散线", exit: "西北", via: "EXIT_NW", color: "#b58cff" },
+  { id: "EVAC_S", name: "正南通道疏散线", exit: "正南", via: "EXIT_S", color: "#70b8ff" },
+  { id: "EVAC_N", name: "正北通道疏散线", exit: "正北", via: "EXIT_N", color: "#43e4ff" },
+  { id: "EVAC_NW", name: "西北通道疏散线", exit: "西北", via: "EXIT_NW", color: "#8fa8ff" },
 ]
 
 const nodes: GraphNode[] = [
   { id: "HALL_CORE", x: 52, y: 21 },
   { id: "HALL_WEST", x: 36, y: 23 },
-  { id: "HALL_EAST", x: 64, y: 20 },
+  { id: "HALL_NORTH", x: 52, y: 17 },
   { id: "EXIT_SW", x: 20, y: 29 },
-  { id: "EXIT_S", x: 50, y: 31 },
-  { id: "EXIT_N", x: 70, y: 14 },
+  { id: "EXIT_S", x: 52, y: 30.5 },
+  { id: "EXIT_N", x: 52, y: 14 },
   { id: "EXIT_NW", x: 19, y: 18 },
   { id: "L2_SW", x: 24, y: 47 },
   { id: "L2_S", x: 49, y: 50 },
@@ -61,8 +61,8 @@ const edges: GraphEdge[] = [
   { from: "EXIT_S", to: "L2_S", lane: "正南" },
   { from: "L2_S", to: "L1_S", lane: "正南" },
   { from: "L1_S", to: "WEST_PLAZA", lane: "正南" },
-  { from: "HALL_CORE", to: "HALL_EAST", lane: "正北" },
-  { from: "HALL_EAST", to: "EXIT_N", lane: "正北" },
+  { from: "HALL_CORE", to: "HALL_NORTH", lane: "正北" },
+  { from: "HALL_NORTH", to: "EXIT_N", lane: "正北" },
   { from: "EXIT_N", to: "L2_N", lane: "正北" },
   { from: "L2_N", to: "L1_N", lane: "正北" },
   { from: "L1_N", to: "WEST_PLAZA", lane: "正北" },
@@ -199,15 +199,19 @@ function pointAlongRoute(points: Point[], progress: number) {
 }
 
 export function synchronizeAgentsWithRoutes(agents: AgentPoint[], routes: DynamicRoute[], minute: number) {
-  if (minute < 21 || minute >= 35) return agents
+  if (minute < 21 || minute >= 47) return agents
+  const returning = minute >= 35
   const recommended = routes.find((route) => route.recommended) ?? routes[0]
   const alternates = routes.filter((route) => route.id !== recommended.id)
   let movingIndex = 0
   return agents.map((agent) => {
-    if (agent.regionId !== "hall" || movingIndex >= 72) return agent
+    const sourceRegion = returning ? "plaza" : "hall"
+    if (agent.regionId !== sourceRegion || movingIndex >= 72) return agent
     const index = movingIndex++
-    const route = index % 10 < 5 ? recommended : alternates[index % Math.max(1, alternates.length)]
-    const progress = ((minute - 21) * 0.09 + index * 0.053) % 1
+    const selected = index % 10 < 5 ? recommended : alternates[index % Math.max(1, alternates.length)]
+    const route = returning ? { ...selected, points: [...selected.points].reverse() } : selected
+    const phaseStart = returning ? 35 : 21
+    const progress = ((minute - phaseStart) * 0.09 + index * 0.053) % 1
     return { ...agent, ...pointAlongRoute(route.points, progress) }
   })
 }
