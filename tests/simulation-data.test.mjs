@@ -77,7 +77,7 @@ test("总图支持无滚动条拖拽缩放且监控面板可折叠", async () =>
   assert.match(overview, /zhengzhou-east-layout\.png/)
   assert.doesNotMatch(overview, /route-live-legend/)
   assert.match(css, /\.overview-map-stage[^}]*overflow: hidden/)
-  assert.match(css, /\.map-pan-layer[^}]*width: min\(1040px/)
+  assert.match(css, /\.map-pan-layer[^}]*width: 100%/)
   assert.match(css, /\.map-pan-layer[^}]*height: min\(95%/)
 })
 
@@ -90,6 +90,7 @@ test("底图默认110%且路径推荐仅在步骤聚焦大图的独立侧栏展�
   assert.doesNotMatch(overview, /className="map-pan-layer"[^\n]*scale\(\$\{view\.scale\}\)/)
   assert.doesNotMatch(overview, /flow-direction-banner/)
   assert.doesNotMatch(css, /\.flow-direction-banner/)
+  assert.match(css, /\.step-focus-map \.map-pan-layer \{ width: 100%;/)
   assert.match(overview, /export function DynamicRouteRecommendation/)
   assert.doesNotMatch(overview, /orientation-correction-mask/)
   assert.match(dashboard, /<aside className="step-focus-summary">\s*<DynamicRouteRecommendation/)
