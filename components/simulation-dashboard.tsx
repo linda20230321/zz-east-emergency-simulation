@@ -39,6 +39,7 @@ import {
 import { getScriptRuntimeStep } from "@/lib/scenario-script"
 
 const speeds = [0.5, 1, 2, 5, 10]
+const focusEventMinutes = [5, 21, 23, 29, 32, 35]
 const deviceTypeNames: Record<DeviceState["type"], string> = { gate: "闸机/通道", broadcast: "广播/喇叭", display: "显示屏", door: "直梯/通道", window: "售票窗口" }
 const deviceTypeOrder = Object.keys(deviceTypeNames) as DeviceState["type"][]
 
@@ -122,6 +123,20 @@ function severityLabel(severity: (typeof events)[number]["severity"]) {
   return "信息"
 }
 
+function deviceMatchesAction(device: DeviceState, actionDevice: string) {
+  if (device.name.includes(actionDevice) || actionDevice.includes(device.name)) return true
+  const sharedPlace = ["正南外", "正南内", "正北", "西广场", "服务台", "32B", "第八售票处"]
+    .some((place) => device.name.includes(place) && actionDevice.includes(place))
+  if (!sharedPlace) return false
+  const sameKind = [
+    ["喇叭", "广播"],
+    ["屏", "显示"],
+    ["通道", "直梯"],
+    ["窗口", "售票"],
+  ].some((keywords) => keywords.some((keyword) => device.name.includes(keyword)) && keywords.some((keyword) => actionDevice.includes(keyword)))
+  return sameKind
+}
+
 export function SimulationDashboard() {
   const [minute, setMinute] = useState(5)
   const [playing, setPlaying] = useState(false)
@@ -167,7 +182,7 @@ export function SimulationDashboard() {
   const devices = useMemo(() => getDevices(roundedMinute), [roundedMinute])
   const currentEvent = getCurrentEvent(roundedMinute)
   const scriptStep = getScriptRuntimeStep(roundedMinute)
-  const focusEventMinutes = [5, 21, 23, 29, 32, 35]
+  const focusDevices = devices.filter((device) => scriptStep.actions.some((action) => deviceMatchesAction(device, action.device)))
   useEffect(() => {
     if (!playing || !focusEventMinutes.includes(currentEvent.minute) || autoFocusedMinute.current === currentEvent.minute) return
     autoFocusedMinute.current = currentEvent.minute
@@ -316,7 +331,7 @@ export function SimulationDashboard() {
           </DialogHeader>
           <div className="step-focus-layout">
             <section className="step-focus-map" aria-label="当前步骤平面图">
-              <StationOverviewMap minute={minute} regions={regions} devices={devices.filter((device) => device.tone !== "normal")} onDeviceSelect={setSelectedDevice} />
+              <StationOverviewMap minute={minute} regions={regions} devices={focusDevices} onDeviceSelect={setSelectedDevice} />
             </section>
             <aside className="step-focus-summary">
               <div className="focus-flow-state">
@@ -326,7 +341,7 @@ export function SimulationDashboard() {
               <div className="focus-kpi-grid">
                 <div><span>候车室</span><b>{hall.count.toLocaleString()}人</b></div>
                 <div><span>西广场</span><b>{plaza.count.toLocaleString()}人</b></div>
-                <div><span>关联设备</span><b>{devices.filter((device) => device.tone !== "normal").length}个</b></div>
+                <div><span>关联设备</span><b>{focusDevices.length}个</b></div>
               </div>
               <div className="focus-process"><span>本步处置</span><p>{scriptStep.process}</p></div>
               <div className="focus-action-list">
